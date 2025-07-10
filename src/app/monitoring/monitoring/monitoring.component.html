@@ -1,0 +1,19 @@
+<div class="min-h-screen bg-gray-100 p-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Panel Principal -->
+      <div class="bg-white rounded-lg shadow-lg p-4 col-span-2">
+        <div echarts [options]="chartOption" class="h-[400px] w-full"></div>
+      </div>
+  
+      <!-- Panel de Potencia -->
+      <div class="bg-white rounded-lg shadow-lg p-4">
+        <div echarts [options]="powerChartOption" class="h-[300px] w-full"></div>
+      </div>
+  
+      <!-- Panel de Energía -->
+      <div class="bg-white rounded-lg shadow-lg p-4">
+        <div echarts [options]="energyChartOption" class="h-[300px] w-full"></div>
+      </div>
+    </div>
+  </div>
+  
