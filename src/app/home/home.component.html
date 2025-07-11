@@ -1,6 +1,223 @@
-<div class="home-container">
-  <div class="welcome-section">
-    <h1>Bienvenido a Voltio</h1>
-    <button class="start-button" routerLink="/auth/login">Empecemos</button>
+<div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+  <div
+    class="relative w-[80vw] h-[80vh] rounded-3xl overflow-hidden shadow-xl bg-white flex items-center justify-center mb-8 my-6"
+  >
+    <img
+      src="raoy.jpg"
+      alt="Imagen principal"
+      class="absolute inset-0 w-full h-full object-cover opacity-100"
+    />
+    <div
+      class="relative z-10 flex flex-col items-center justify-center text-center px-8"
+    >
+      <h1
+        class="text-5xl font-bold text-white py-3 px-8 rounded-full shadow-lg transition"
+      >
+        Controla tu energia, domina tus costos
+      </h1>
+      <p
+        class="text-xl text-white font-semibold py-3 px-8 rounded-full shadow-lg transition"
+      >
+        voltio te ofrece una vision clara de tu consumo electrico,
+        pemitiendodote tomar decisiones inteligentes para ahorrar y optimizar el
+        uso de energia en tu hogar o negocio
+      </p>
+      <button
+        class="start-button bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition"
+        routerLink="/auth/register"
+      >
+        Empecemos
+      </button>
+    </div>
+  </div>
+  <div class="w-[80vw] text-center my-10">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">
+      Características principales
+    </h2>
+    <p class="text-lg text-gray-600">
+      Voltio integra sensores avanzados y una interfaz intuitiva para ofrecerte
+      una experiencia completa en la gestión de energía.
+    </p>
+  </div>
+  <div class="flex flex-row gap-8 justify-center">
+    <div class="flex items-center rounded-xl shadow-md px-6 py-5 w-80" style="background-color: rgb(251, 234, 182);">
+      <span class="text-xl font-semibold text-gray-800 flex-1"
+        >Monitoreo en tiempo real</span
+      >
+      <svg
+        class="w-8 h-8 text-blue-600"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M13 16h-1v-4h-1m4 0h-1v-4h-1m4 0h-1v-4h-1"
+        ></path>
+      </svg>
+    </div>
+    <div class="flex items-center rounded-xl shadow-md px-6 py-5 w-80" style="background-color: rgb(251, 234, 182);">
+      <span class="text-xl font-semibold text-gray-800 flex-1"
+        >Alertas inteligentes</span
+      >
+      <svg
+        class="w-8 h-8 text-yellow-500"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 9v2m0 4h.01"
+        ></path>
+        <circle
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="2"
+          fill="none"
+        />
+      </svg>
+    </div>
+
+    <div class="flex items-center  rounded-xl shadow-md px-6 py-5 w-80" style="background-color: rgb(251, 234, 182);">
+      <span class="text-xl font-semibold text-gray-800 flex-1"
+        >Análisis detallado</span
+      >
+      <svg
+        class="w-8 h-8 text-green-600"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M4 17h16M4 13h16M4 9h16M4 5h16"
+        ></path>
+      </svg>
+    </div>
+  </div>
+  <div class="w-[80vw] mx-auto mt-16 text-center">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">
+      Sensores que hacen funcionar a Voltio
+    </h2>
+    <p class="text-lg text-gray-600 mb-10">
+      Los sensores de Voltio monitorean el consumo en tiempo real,
+      proporcionando datos detallados sobre el uso de la corriente eléctrica en
+      tu hogar. Estos datos te ayudan a identificar patrones de consumo,
+      optimizar el uso de energía y reducir costos.
+    </p>
+    <!-- Cards de sensores -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+      <!-- Card 1 -->
+      <div
+        class="bg-white rounded-xl shadow-md px-6 py-8 flex flex-col items-center"
+      >
+        <span class="text-xl font-bold text-gray-800 mb-2"
+          >Raspberry PI 4</span
+        >
+        <p class="text-sm text-gray-600 mb-4 text-center">
+          Actúa como el cerebro del sistema, gestionando la comunicación entre los
+          sensores y la aplicación.
+        </p>
+        <img
+          src="rasp.png"
+          alt="Sensor Principal"
+          class="w-20 h-20 object-contain"
+        />
+      </div>
+      <!-- Card 2 -->
+      <div
+        class="bg-white rounded-xl shadow-md px-6 py-8 flex flex-col items-center"
+      >
+        <span class="text-xl font-bold text-gray-800 mb-2"
+          >ESP32</span
+        >
+        <p class="text-sm text-gray-600 mb-4 text-center">
+          Microcontrolador con Wi-Fi y Bluetooth integrado. Permite la conexión
+          inalámbrica de los sensores a la red.
+        </p>
+        <img
+          src="esp.png"
+          alt="Sensor de Corriente"
+          class="w-20 h-20 object-contain"
+        />
+      </div>
+      <!-- Card 3 -->
+      <div
+        class="bg-white rounded-xl shadow-md px-6 py-8 flex flex-col items-center"
+      >
+        <span class="text-xl font-bold text-gray-800 mb-2"
+          >Sensor de Luz
+          LDR
+          </span
+        >
+        <p class="text-sm text-gray-600 mb-4 text-center">
+          Varía su resistencia según la cantidad de luz. Se usa para medir niveles de luminosidad y activar luces automáticamente.
+        </p>
+        <img
+          src="ldr.png"
+          alt="Sensor de Voltaje"
+          class="w-20 h-20 object-contain"
+        />
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <!-- Card 4 -->
+      <div
+        class="bg-white rounded-xl shadow-md px-6 py-8 flex flex-col items-center"
+      >
+        <span class="text-xl font-bold text-gray-800 mb-2"
+          >Sensor de Movimiento PIR</span
+        >
+        <p class="text-sm text-gray-600 mb-4 text-center">
+          Detecta movimiento mediante cambios en la radiación infrarroja. Ideal para alarmas y sistemas de iluminación automática.
+        </p>
+        <img
+          src="pri.png"
+          alt="Sensor de Temperatura"
+          class="w-20 h-20 object-contain"
+        />
+      </div>
+      <!-- Card 5 -->
+      <div
+        class="bg-white rounded-xl shadow-md px-6 py-8 flex flex-col items-center"
+      >
+        <span class="text-xl font-bold text-gray-800 mb-2"
+          >Sensor de Humedad y Temperatura DHT22</span
+        >
+        <p class="text-sm text-gray-600 mb-4 text-center">
+          Mide temperatura y humedad con buena precisión. Común en estaciones meteorológicas y control ambiental.
+        </p>
+        <img
+          src="dht.png"
+          alt="Sensor de Humedad"
+          class="w-20 h-20 object-contain"
+        />
+      </div>
+      <!-- Card 6 -->
+      <div
+        class="bg-white rounded-xl shadow-md px-6 py-8 flex flex-col items-center"
+      >
+        <span class="text-xl font-bold text-gray-800 mb-2"
+          >Sensor de Corriente ACS712</span
+        >
+        <p class="text-sm text-gray-600 mb-4 text-center">
+          Mide corriente alterna y continua. Útil para monitorear consumo eléctrico y protección de equipos.
+        </p>
+        <img
+          src="acs.png"
+          alt="Sensor de Potencia"
+          class="w-20 h-20 object-contain"
+        />
+      </div>
+    </div>
   </div>
 </div>
