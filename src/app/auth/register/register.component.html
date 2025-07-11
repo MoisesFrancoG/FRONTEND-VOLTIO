@@ -1,9 +1,17 @@
-<div class="min-h-screen flex items-center justify-center bg-[#faf7f2] py-12 px-4 sm:px-6 lg:px-8">
+<div
+  class="min-h-screen flex items-center justify-center bg-[#faf7f2] py-12 px-4 sm:px-6 lg:px-8"
+>
   <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
     <div>
-      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Sign up for Voltio</h2>
+      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        Sign up for Voltio
+      </h2>
     </div>
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="mt-8 space-y-6">
+    <form
+      [formGroup]="registerForm"
+      (ngSubmit)="onSubmit()"
+      class="mt-8 space-y-6"
+    >
       <div class="space-y-4">
         <div>
           <input
@@ -11,8 +19,12 @@
             formControlName="fullName"
             placeholder="Full Name"
             class="appearance-none rounded-md relative block w-full px-3 py-2 bg-[#ffe69c] placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            [ngClass]="{'border-red-500 border-2': registerForm.get('fullName')?.errors && registerForm.get('fullName')?.touched}"
-          >
+            [ngClass]="{
+              'border-red-500 border-2':
+                registerForm.get('fullName')?.errors &&
+                registerForm.get('fullName')?.touched
+            }"
+          />
         </div>
 
         <div>
@@ -21,8 +33,12 @@
             formControlName="email"
             placeholder="Email"
             class="appearance-none rounded-md relative block w-full px-3 py-2 bg-[#ffe69c] placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            [ngClass]="{'border-red-500 border-2': registerForm.get('email')?.errors && registerForm.get('email')?.touched}"
-          >
+            [ngClass]="{
+              'border-red-500 border-2':
+                registerForm.get('email')?.errors &&
+                registerForm.get('email')?.touched
+            }"
+          />
         </div>
 
         <div>
@@ -31,8 +47,12 @@
             formControlName="password"
             placeholder="Password"
             class="appearance-none rounded-md relative block w-full px-3 py-2 bg-[#ffe69c] placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            [ngClass]="{'border-red-500 border-2': registerForm.get('password')?.errors && registerForm.get('password')?.touched}"
-          >
+            [ngClass]="{
+              'border-red-500 border-2':
+                registerForm.get('password')?.errors &&
+                registerForm.get('password')?.touched
+            }"
+          />
         </div>
 
         <div>
@@ -41,8 +61,12 @@
             formControlName="confirmPassword"
             placeholder="Confirm Password"
             class="appearance-none rounded-md relative block w-full px-3 py-2 bg-[#ffe69c] placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            [ngClass]="{'border-red-500 border-2': registerForm.get('confirmPassword')?.errors && registerForm.get('confirmPassword')?.touched}"
-          >
+            [ngClass]="{
+              'border-red-500 border-2':
+                registerForm.get('confirmPassword')?.errors &&
+                registerForm.get('confirmPassword')?.touched
+            }"
+          />
         </div>
       </div>
 
@@ -51,7 +75,7 @@
           type="checkbox"
           formControlName="termsAccepted"
           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-        >
+        />
         <label class="ml-2 block text-sm text-gray-900">
           I agree to the Terms of service
         </label>
@@ -67,5 +91,15 @@
         </button>
       </div>
     </form>
+    <div class="mt-4 text-center">
+      <span class="text-gray-700"
+        >¿Ya tienes una cuenta?
+        <a
+          routerLink="/auth/login"
+          class="text-blue-600 hover:underline font-semibold"
+          >Inicia sesión aquí</a
+        >
+      </span>
+    </div>
   </div>
 </div>
