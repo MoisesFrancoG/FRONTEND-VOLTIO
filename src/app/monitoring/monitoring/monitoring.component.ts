@@ -4,21 +4,21 @@ import { EChartsOption, SeriesOption } from 'echarts';
 @Component({
   selector: 'app-monitoring',
   templateUrl: './monitoring.component.html',
-  styleUrls: ['./monitoring.component.css']
+  styleUrls: ['./monitoring.component.css'],
 })
 export class MonitoringComponent implements OnInit, OnDestroy {
   private ws: WebSocket;
 
   chartOption: EChartsOption & { series: SeriesOption[] } = {
-    series: []
+    series: [],
   };
 
   powerChartOption: EChartsOption & { series: SeriesOption[] } = {
-    series: []
+    series: [],
   };
 
   energyChartOption: EChartsOption & { series: SeriesOption[] } = {
-    series: []
+    series: [],
   };
 
   timeData: string[] = [];
@@ -27,8 +27,12 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   powerData: number[] = [];
   energyData: number[] = [];
 
+  selectedChart: 'main' | 'power' | 'energy' = 'main';
+
   constructor() {
-    this.ws = new WebSocket('wss://websocketvoltio.acstree.xyz/ws?topic=pzem&mac=CC:DB:A7:2F:AE:B0');
+    this.ws = new WebSocket(
+      'wss://websocketvoltio.acstree.xyz/ws?topic=pzem&mac=CC:DB:A7:2F:AE:B0'
+    );
   }
 
   ngOnInit() {
@@ -40,6 +44,10 @@ export class MonitoringComponent implements OnInit, OnDestroy {
     if (this.ws) {
       this.ws.close();
     }
+  }
+
+  setChart(chart: 'main' | 'power' | 'energy') {
+    this.selectedChart = chart;
   }
 
   private setupWebSocket() {
@@ -81,31 +89,31 @@ export class MonitoringComponent implements OnInit, OnDestroy {
     this.chartOption = {
       title: {
         text: 'Voltaje y Corriente en Tiempo Real',
-        left: 'center'
+        left: 'center',
       },
       tooltip: {
         trigger: 'axis',
-        axisPointer: { type: 'cross' }
+        axisPointer: { type: 'cross' },
       },
       legend: {
         data: ['Voltaje (V)', 'Corriente (A)'],
-        bottom: 0
+        bottom: 0,
       },
       xAxis: {
         type: 'category',
-        data: []
+        data: [],
       },
       yAxis: [
         {
           type: 'value',
           name: 'Voltaje (V)',
-          position: 'left'
+          position: 'left',
         },
         {
           type: 'value',
           name: 'Corriente (A)',
-          position: 'right'
-        }
+          position: 'right',
+        },
       ],
       series: [
         {
@@ -114,7 +122,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
           data: [],
           smooth: true,
           lineStyle: { width: 2 },
-          itemStyle: { color: '#FF4560' }
+          itemStyle: { color: '#FF4560' },
         },
         {
           name: 'Corriente (A)',
@@ -123,26 +131,26 @@ export class MonitoringComponent implements OnInit, OnDestroy {
           data: [],
           smooth: true,
           lineStyle: { width: 2 },
-          itemStyle: { color: '#00E396' }
-        }
-      ]
+          itemStyle: { color: '#00E396' },
+        },
+      ],
     };
 
     this.powerChartOption = {
       title: {
         text: 'Potencia en Tiempo Real',
-        left: 'center'
+        left: 'center',
       },
       tooltip: {
-        trigger: 'axis'
+        trigger: 'axis',
       },
       xAxis: {
         type: 'category',
-        data: []
+        data: [],
       },
       yAxis: {
         type: 'value',
-        name: 'Potencia (W)'
+        name: 'Potencia (W)',
       },
       series: [
         {
@@ -150,34 +158,34 @@ export class MonitoringComponent implements OnInit, OnDestroy {
           data: [],
           areaStyle: {},
           smooth: true,
-          itemStyle: { color: '#008FFB' }
-        }
-      ]
+          itemStyle: { color: '#008FFB' },
+        },
+      ],
     };
 
     this.energyChartOption = {
       title: {
         text: 'Consumo de Energía',
-        left: 'center'
+        left: 'center',
       },
       tooltip: {
-        trigger: 'axis'
+        trigger: 'axis',
       },
       xAxis: {
         type: 'category',
-        data: []
+        data: [],
       },
       yAxis: {
         type: 'value',
-        name: 'Energía (kWh)'
+        name: 'Energía (kWh)',
       },
       series: [
         {
           type: 'bar',
           data: [],
-          itemStyle: { color: '#FEB019' }
-        }
-      ]
+          itemStyle: { color: '#FEB019' },
+        },
+      ],
     };
   }
 
@@ -186,7 +194,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
       ...this.chartOption,
       xAxis: {
         type: 'category',
-        data: [...this.timeData]
+        data: [...this.timeData],
       },
       series: [
         {
@@ -195,7 +203,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
           data: [...this.voltageData],
           smooth: true,
           lineStyle: { width: 2 },
-          itemStyle: { color: '#FF4560' }
+          itemStyle: { color: '#FF4560' },
         },
         {
           name: 'Corriente (A)',
@@ -204,16 +212,16 @@ export class MonitoringComponent implements OnInit, OnDestroy {
           data: [...this.currentData],
           smooth: true,
           lineStyle: { width: 2 },
-          itemStyle: { color: '#00E396' }
-        }
-      ]
+          itemStyle: { color: '#00E396' },
+        },
+      ],
     };
 
     this.powerChartOption = {
       ...this.powerChartOption,
       xAxis: {
         type: 'category',
-        data: [...this.timeData]
+        data: [...this.timeData],
       },
       series: [
         {
@@ -221,24 +229,24 @@ export class MonitoringComponent implements OnInit, OnDestroy {
           data: [...this.powerData],
           areaStyle: {},
           smooth: true,
-          itemStyle: { color: '#008FFB' }
-        }
-      ]
+          itemStyle: { color: '#008FFB' },
+        },
+      ],
     };
 
     this.energyChartOption = {
       ...this.energyChartOption,
       xAxis: {
         type: 'category',
-        data: [...this.timeData]
+        data: [...this.timeData],
       },
       series: [
         {
           type: 'bar',
           data: [...this.energyData],
-          itemStyle: { color: '#FEB019' }
-        }
-      ]
+          itemStyle: { color: '#FEB019' },
+        },
+      ],
     };
   }
 }
