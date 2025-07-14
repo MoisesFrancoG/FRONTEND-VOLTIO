@@ -4,20 +4,26 @@ import { RouterModule, Routes } from '@angular/router';
 const routes: Routes = [
   {
     path: '',
-    loadChildren: () => import('./home/home.module').then(m => m.HomeModule)
+    loadChildren: () => import('./home/home.module').then((m) => m.HomeModule),
   },
   {
     path: 'auth',
-    loadChildren: () => import('./auth/auth.module').then(m => m.AuthModule)
+    loadChildren: () => import('./auth/auth.module').then((m) => m.AuthModule),
   },
   {
     path: 'monitoring',
-    loadChildren: () => import('./monitoring/monitoring.module').then(m => m.MonitoringModule)
-  }
+    loadChildren: () =>
+      import('./monitoring/monitoring.module').then((m) => m.MonitoringModule),
+  },
+  {
+    path: 'bluetooth',
+    loadChildren: () =>
+      import('./bluetooth/bluetooth.module').then((m) => m.BluetoothModule),
+  },
 ];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}
