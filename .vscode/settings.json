@@ -1,0 +1,15 @@
+{
+  "css.validate": false,
+  "scss.validate": false,
+  "less.validate": false,
+  "tailwindCSS.includeLanguages": {
+    "html": "html",
+    "typescript": "html"
+  },
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "emmet.includeLanguages": {
+    "typescript": "html"
+  }
+}
