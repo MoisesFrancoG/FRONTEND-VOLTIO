@@ -1,0 +1,256 @@
+<div class="min-h-screen bg-gray-100 p-4">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">
+        Configuración Bluetooth ESP32/RaspberryPI
+      </h1>
+      <p class="text-gray-600">
+        Configure la conexión WiFi de sus dispositivos IoT de forma inalámbrica
+      </p>
+    </div>
+
+    <!-- Status Card -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">Estado de Conexión</h2>
+        <div class="flex space-x-2">
+          <button
+            (click)="onSearchDevices()"
+            [disabled]="isSearchButtonDisabled()"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            <i class="fas fa-search mr-2"></i>
+            Buscar Dispositivos
+          </button>
+
+          <button
+            *ngIf="connectedDevice?.connected"
+            (click)="onDisconnect()"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <i class="fas fa-disconnect mr-2"></i>
+            Desconectar
+          </button>
+        </div>
+      </div>
+
+      <!-- Status Display -->
+      <div class="border rounded-lg p-4 bg-gray-50">
+        <div class="flex items-center mb-3">
+          <div
+            class="w-3 h-3 rounded-full mr-3"
+            [ngClass]="
+              currentStatus === ConfigurationStatus.CONNECTED ||
+              currentStatus === ConfigurationStatus.CONFIGURED
+                ? 'bg-green-500'
+                : currentStatus === ConfigurationStatus.ERROR
+                ? 'bg-red-500'
+                : 'bg-yellow-500 animate-pulse'
+            "
+          ></div>
+          <span class="font-medium" [ngClass]="getStatusColor()">
+            {{ getStatusText() }}
+          </span>
+        </div>
+
+        <!-- Device Info -->
+        <div *ngIf="connectedDevice" class="mt-3 p-3 bg-white rounded border">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <span class="text-sm text-gray-500">Dispositivo:</span>
+              <p class="font-medium">{{ connectedDevice.name }}</p>
+            </div>
+            <div>
+              <span class="text-sm text-gray-500">Estado:</span>
+              <p
+                class="font-medium"
+                [ngClass]="
+                  connectedDevice.connected ? 'text-green-600' : 'text-red-600'
+                "
+              >
+                {{ connectedDevice.connected ? "Conectado" : "Desconectado" }}
+              </p>
+            </div>
+            <div>
+              <span class="text-sm text-gray-500">Última conexión:</span>
+              <p class="font-medium text-sm">
+                {{ connectedDevice.lastSeen | date : "short" }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div
+          *ngIf="errorMessage"
+          class="mt-3 p-3 bg-red-50 border border-red-200 rounded"
+        >
+          <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+            <span class="text-red-700">{{ errorMessage }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WiFi Configuration Form -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">
+        Configuración WiFi
+      </h2>
+
+      <form [formGroup]="wifiForm" (ngSubmit)="onConfigureWiFi()">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- SSID Field -->
+          <div>
+            <label
+              for="ssid"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Nombre de Red (SSID) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="ssid"
+              formControlName="ssid"
+              [disabled]="isFormDisabled()"
+              placeholder="Ej: MiRedWiFi"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            />
+
+            <div
+              *ngIf="
+                wifiForm.get('ssid')?.errors && wifiForm.get('ssid')?.touched
+              "
+              class="mt-1 text-sm text-red-600"
+            >
+              <span *ngIf="wifiForm.get('ssid')?.errors?.['required']">
+                El nombre de red es requerido
+              </span>
+            </div>
+          </div>
+
+          <!-- Password Field -->
+          <div>
+            <label
+              for="password"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Contraseña WiFi <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input
+                type="password"
+                id="password"
+                formControlName="password"
+                [disabled]="isFormDisabled()"
+                placeholder="Ingrese la contraseña"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <div
+              *ngIf="
+                wifiForm.get('password')?.errors &&
+                wifiForm.get('password')?.touched
+              "
+              class="mt-1 text-sm text-red-600"
+            >
+              <span *ngIf="wifiForm.get('password')?.errors?.['required']">
+                La contraseña es requerida
+              </span>
+              <span *ngIf="wifiForm.get('password')?.errors?.['minlength']">
+                La contraseña debe tener al menos 8 caracteres
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 mt-6">
+          <button
+            type="submit"
+            [disabled]="wifiForm.invalid || isFormDisabled()"
+            class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            <i class="fas fa-wifi mr-2"></i>
+            Configurar WiFi
+          </button>
+
+          <button
+            type="button"
+            (click)="onResetConfiguration()"
+            class="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            <i class="fas fa-redo mr-2"></i>
+            Reiniciar Configuración
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Instructions Card -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">
+      <h3 class="text-lg font-semibold text-blue-800 mb-3">
+        <i class="fas fa-info-circle mr-2"></i>
+        Instrucciones de Uso
+      </h3>
+
+      <div class="space-y-3 text-blue-700">
+        <div class="flex items-start">
+          <span
+            class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5"
+            >1</span
+          >
+          <p>
+            Conecte su dispositivo ESP32/RaspberryPI a la corriente. Los LEDs
+            deben parpadear alternadamente.
+          </p>
+        </div>
+
+        <div class="flex items-start">
+          <span
+            class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5"
+            >2</span
+          >
+          <p>
+            Haga clic en "Buscar Dispositivos" y seleccione "Configuracion PZEM"
+            en la ventana emergente.
+          </p>
+        </div>
+
+        <div class="flex items-start">
+          <span
+            class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5"
+            >3</span
+          >
+          <p>
+            Una vez conectado, ingrese las credenciales de su red WiFi y haga
+            clic en "Configurar WiFi".
+          </p>
+        </div>
+
+        <div class="flex items-start">
+          <span
+            class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 mt-0.5"
+            >4</span
+          >
+          <p>
+            El dispositivo se reiniciará automáticamente y se conectará a su red
+            WiFi.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+        <p class="text-yellow-800 text-sm">
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          <strong>Nota:</strong> Esta funcionalidad requiere un navegador
+          compatible con Web Bluetooth API (Chrome, Edge, Opera) y conexión
+          HTTPS.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
