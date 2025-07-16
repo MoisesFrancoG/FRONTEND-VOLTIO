@@ -10,12 +10,12 @@ import {
   providedIn: 'root',
 })
 export class BluetoothService {
-  // UUIDs para el servicio y características
+  // UUIDs para el servicio y características (deben coincidir con el ESP32)
   private readonly SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
-  private readonly WIFI_SSID_CHAR_UUID = '6d68efe5-04b6-4a85-abc4-c2670b7bf7fd';
-  private readonly WIFI_PASS_CHAR_UUID = 'f27b53ad-c63d-49a0-8c0f-9f297e6cc520';
+  private readonly WIFI_SSID_CHAR_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+  private readonly WIFI_PASS_CHAR_UUID = 'a3250098-c914-4a49-8588-e5263a8a385d';
   private readonly SAVE_CONFIG_CHAR_UUID =
-    'a87988b9-694c-479c-900e-95ab6e7b6c5f';
+    '7d3b9e43-e65a-4467-9b65-6c70188235f3';
 
   // Estados observables
   private configurationStatusSubject = new BehaviorSubject<ConfigurationStatus>(
@@ -31,6 +31,7 @@ export class BluetoothService {
   public errorMessage$ = this.errorMessageSubject.asObservable();
 
   private bluetoothDevice: BluetoothDevice | null = null;
+  private nativeBluetoothDevice: any = null; // Dispositivo nativo de Web Bluetooth API
   private gattServer: BluetoothRemoteGATTServer | null = null;
   private configService: BluetoothRemoteGATTService | null = null;
 
@@ -66,6 +67,8 @@ export class BluetoothService {
       });
 
       if (device) {
+        // Guardar tanto el dispositivo nativo como nuestro modelo
+        this.nativeBluetoothDevice = device;
         this.bluetoothDevice = {
           id: device.id,
           name: device.name || 'Configuracion PZEM',
@@ -96,18 +99,21 @@ export class BluetoothService {
   }
 
   private async connectToDevice(): Promise<void> {
-    if (!this.bluetoothDevice) return;
+    if (!this.bluetoothDevice || !this.nativeBluetoothDevice) return;
 
     try {
       this.setStatus(ConfigurationStatus.CONNECTING);
 
-      // Obtener el dispositivo Bluetooth nativo
-      const device = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [this.SERVICE_UUID] }],
-      });
+      // Usar el dispositivo ya obtenido en lugar de solicitar uno nuevo
+      const device = this.nativeBluetoothDevice;
 
       // Conectar al servidor GATT
       this.gattServer = await device.gatt!.connect();
+
+      // Verificar que la conexión GATT fue exitosa
+      if (!this.gattServer) {
+        throw new Error('No se pudo establecer conexión GATT');
+      }
 
       // Obtener el servicio de configuración
       this.configService = await this.gattServer.getPrimaryService(
@@ -136,35 +142,70 @@ export class BluetoothService {
 
     try {
       this.setStatus(ConfigurationStatus.CONFIGURING);
+      console.log('Iniciando configuración WiFi...');
+      console.log('UUIDs a usar:', {
+        ssid: this.WIFI_SSID_CHAR_UUID,
+        pass: this.WIFI_PASS_CHAR_UUID,
+        save: this.SAVE_CONFIG_CHAR_UUID,
+      });
 
-      // Obtener características
-      const ssidChar = await this.configService.getCharacteristic(
-        this.WIFI_SSID_CHAR_UUID
-      );
-      const passChar = await this.configService.getCharacteristic(
-        this.WIFI_PASS_CHAR_UUID
-      );
-      const saveChar = await this.configService.getCharacteristic(
-        this.SAVE_CONFIG_CHAR_UUID
-      );
+      // Obtener características con manejo individual de errores
+      let ssidChar, passChar, saveChar;
+
+      try {
+        ssidChar = await this.configService.getCharacteristic(
+          this.WIFI_SSID_CHAR_UUID
+        );
+        console.log('✅ Característica SSID obtenida');
+      } catch (error) {
+        console.error('❌ Error obteniendo característica SSID:', error);
+        await this.debugListCharacteristics();
+        throw new Error(`No se pudo obtener la característica SSID: ${error}`);
+      }
+
+      try {
+        passChar = await this.configService.getCharacteristic(
+          this.WIFI_PASS_CHAR_UUID
+        );
+        console.log('✅ Característica Password obtenida');
+      } catch (error) {
+        console.error('❌ Error obteniendo característica Password:', error);
+        throw new Error(
+          `No se pudo obtener la característica Password: ${error}`
+        );
+      }
+
+      try {
+        saveChar = await this.configService.getCharacteristic(
+          this.SAVE_CONFIG_CHAR_UUID
+        );
+        console.log('✅ Característica Save obtenida');
+      } catch (error) {
+        console.error('❌ Error obteniendo característica Save:', error);
+        throw new Error(`No se pudo obtener la característica Save: ${error}`);
+      }
 
       // Enviar SSID
       await ssidChar.writeValue(new TextEncoder().encode(credentials.ssid));
-      console.log('SSID enviado:', credentials.ssid);
+      console.log('✅ SSID enviado:', credentials.ssid);
 
       // Pequeña pausa entre envíos
       await this.delay(100);
 
       // Enviar contraseña
       await passChar.writeValue(new TextEncoder().encode(credentials.password));
-      console.log('Contraseña enviada');
+      console.log(
+        '✅ Contraseña enviada (longitud:',
+        credentials.password.length,
+        'caracteres)'
+      );
 
       // Pequeña pausa antes del comando final
       await this.delay(100);
 
       // Enviar comando de guardado
       await saveChar.writeValue(new TextEncoder().encode('SAVE'));
-      console.log('Comando SAVE enviado');
+      console.log('✅ Comando SAVE enviado');
 
       this.setStatus(ConfigurationStatus.CONFIGURED);
 
@@ -173,6 +214,7 @@ export class BluetoothService {
         this.handleDisconnection();
       }, 2000);
     } catch (error: any) {
+      console.error('Error completo en configureWiFi:', error);
       this.setError(`Error al configurar WiFi: ${error.message}`);
       this.setStatus(ConfigurationStatus.ERROR);
     }
@@ -205,6 +247,7 @@ export class BluetoothService {
   resetConfiguration(): void {
     this.disconnect();
     this.bluetoothDevice = null;
+    this.nativeBluetoothDevice = null;
     this.connectedDeviceSubject.next(null);
     this.setStatus(ConfigurationStatus.SEARCHING);
     this.setError('');
@@ -220,5 +263,56 @@ export class BluetoothService {
 
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+  // Método para debugging - intenta conectar a características específicas
+  async debugListCharacteristics(): Promise<void> {
+    if (!this.configService) {
+      console.log('No hay servicio activo para depurar');
+      return;
+    }
+
+    try {
+      console.log('=== DEBUGGING: Probando características ===');
+      console.log('Servicio UUID:', this.SERVICE_UUID);
+
+      // Lista de características que esperamos encontrar
+      const expectedChars = [
+        { name: 'SSID', uuid: this.WIFI_SSID_CHAR_UUID },
+        { name: 'Password', uuid: this.WIFI_PASS_CHAR_UUID },
+        { name: 'Save Config', uuid: this.SAVE_CONFIG_CHAR_UUID },
+      ];
+
+      for (const charInfo of expectedChars) {
+        try {
+          const char = await this.configService.getCharacteristic(
+            charInfo.uuid
+          );
+          console.log(`✅ ${charInfo.name} encontrada:`, charInfo.uuid);
+          console.log('   Propiedades:', char.properties);
+        } catch (error) {
+          console.log(`❌ ${charInfo.name} NO encontrada:`, charInfo.uuid);
+          console.log('   Error:', error);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error en debugging:', error);
+    }
+  }
+
+  // Método para obtener información detallada del dispositivo
+  getDeviceInfo(): any {
+    return {
+      bluetoothDevice: this.bluetoothDevice,
+      nativeDevice: this.nativeBluetoothDevice
+        ? {
+            id: this.nativeBluetoothDevice.id,
+            name: this.nativeBluetoothDevice.name,
+            gattConnected: this.nativeBluetoothDevice.gatt?.connected,
+          }
+        : null,
+      gattConnected: this.gattServer?.connected,
+      serviceConnected: !!this.configService,
+      currentStatus: this.configurationStatusSubject.value,
+    };
   }
 }

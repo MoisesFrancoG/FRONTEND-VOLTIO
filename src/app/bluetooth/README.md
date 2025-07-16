@@ -66,9 +66,9 @@ bluetooth/
 ## UUIDs del Protocolo
 
 - **Servicio Principal**: `4fafc201-1fb5-459e-8fcc-c5c9c331914b`
-- **SSID WiFi**: `6d68efe5-04b6-4a85-abc4-c2670b7bf7fd`
-- **Contraseña WiFi**: `f27b53ad-c63d-49a0-8c0f-9f297e6cc520`
-- **Comando Guardado**: `a87988b9-694c-479c-900e-95ab6e7b6c5f`
+- **SSID WiFi**: `beb5483e-36e1-4688-b7f5-ea07361b26a8`
+- **Contraseña WiFi**: `a3250098-c914-4a49-8588-e5263a8a385d`
+- **Comando Guardado**: `7d3b9e43-e65a-4467-9b65-6c70188235f3`
 
 ## Estados de Configuración
 
