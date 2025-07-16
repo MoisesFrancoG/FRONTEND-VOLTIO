@@ -87,6 +87,18 @@ export class BluetoothConfigComponent implements OnInit, OnDestroy {
     this.bluetoothService.disconnect();
   }
 
+  // Método para debugging - solo visible en desarrollo
+  onDebugCharacteristics(): void {
+    console.log('=== DEBUG INFO ===');
+    console.log('Device Info:', this.bluetoothService.getDeviceInfo());
+    this.bluetoothService.debugListCharacteristics();
+  }
+
+  // Método para verificar si estamos en modo desarrollo
+  isDevelopmentMode(): boolean {
+    return true; // Temporalmente siempre true para testing
+  }
+
   getStatusText(): string {
     switch (this.currentStatus) {
       case ConfigurationStatus.SEARCHING:
