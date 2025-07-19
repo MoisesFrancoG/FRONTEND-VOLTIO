@@ -214,6 +214,31 @@ sudo ufw status
 
 ## 🔍 Solución de Problemas Comunes
 
+### ✅ Errores de Angular Corregidos
+
+**Los siguientes errores fueron identificados y corregidos en el proyecto:**
+
+1. **Error: "Can't bind to 'options' on 'div'"**
+
+   - **Causa:** El componente `MonitoringComponent` usa la directiva `echarts` pero no estaba importada en los tests
+   - **Solución:** Agregado `NgxEchartsModule` en `monitoring.component.spec.ts`
+
+2. **Error: "Can't bind to 'formGroup' on 'form'"**
+
+   - **Causa:** Los tests de `LoginComponent` y `RegisterComponent` no importaban `ReactiveFormsModule`
+   - **Solución:** Agregado `ReactiveFormsModule` en ambos archivos `.spec.ts`
+
+3. **Error: "'app-navbar' is not a known element"**
+
+   - **Causa:** El test de `AppComponent` no importaba `SharedModule` que contiene `NavbarComponent`
+   - **Solución:** Agregado `SharedModule` en `app.component.spec.ts`
+
+4. **Errores adicionales corregidos:**
+   - Agregado `RouterTestingModule` en tests que usan `routerLink`
+   - Corregidos imports faltantes en `HomeComponent` y `NavbarComponent` tests
+
+**Estado actual:** ✅ Todos los tests pasan correctamente (12/12 SUCCESS)
+
 ### Problema: El despliegue falla en GitHub Actions
 
 **Solución:**

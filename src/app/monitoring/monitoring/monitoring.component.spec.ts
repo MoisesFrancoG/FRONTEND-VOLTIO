@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { NgxEchartsModule } from 'ngx-echarts';
 import { MonitoringComponent } from './monitoring.component';
 
 describe('MonitoringComponent', () => {
@@ -8,9 +8,13 @@ describe('MonitoringComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [MonitoringComponent]
-    })
-    .compileComponents();
+      declarations: [MonitoringComponent],
+      imports: [
+        NgxEchartsModule.forRoot({
+          echarts: () => import('echarts'),
+        }),
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(MonitoringComponent);
     component = fixture.componentInstance;
