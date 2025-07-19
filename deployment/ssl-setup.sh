@@ -30,7 +30,7 @@ fi
 
 # Obtener certificado SSL
 echo "📜 Obteniendo certificado SSL de Let's Encrypt..."
-sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN --non-interactive --agree-tos --email $EMAIL
+sudo certbot --nginx -d $DOMAIN -d $DOMAIN --non-interactive --agree-tos --email $EMAIL
 
 # Verificar que el certificado se instaló correctamente
 if sudo certbot certificates | grep -q $DOMAIN; then
