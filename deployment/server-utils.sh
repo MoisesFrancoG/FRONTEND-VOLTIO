@@ -161,136 +161,97 @@ update_system() {
 }
 
 # Función para diagnosticar problemas post-despliegue
-post_deploy_check() {
-    echo -e "${BLUE}🔍 Diagnóstico Post-Despliegue${NC}"
-    echo "===================================="
+function post_deploy_check() {
+    echo "🔍 VERIFICACIÓN POST-DESPLIEGUE"
+    echo "================================"
     
-    # 1. Verificar estructura de archivos
-    echo -e "\n${BLUE}📁 1. Verificando estructura de archivos:${NC}"
-    if [ -d "$APP_DIR" ]; then
-        echo "Directorio $APP_DIR existe"
-        echo "Contenido:"
-        ls -la "$APP_DIR" | head -10
-        
-        if [ ! -f "$APP_DIR/index.html" ]; then
-            echo -e "${RED}❌ PROBLEMA: index.html no encontrado${NC}"
-            echo "Archivos presentes:"
-            find "$APP_DIR" -name "*.html" -o -name "*.js" -o -name "*.css" | head -5
-        else
-            file_size=$(stat -c%s "$APP_DIR/index.html")
-            echo -e "${GREEN}✅ index.html encontrado (${file_size} bytes)${NC}"
-        fi
-    else
-        echo -e "${RED}❌ PROBLEMA: Directorio $APP_DIR no existe${NC}"
+    # Verificar estructura de directorios
+    echo "📁 Estructura de directorios:"
+    ls -la /var/www/voltio/
+    
+    # Verificar si existe directorio browser (problema común en Angular 17+)
+    if [ -d "/var/www/voltio/browser" ]; then
+        echo "⚠️ PROBLEMA DETECTADO: Directorio 'browser' encontrado"
+        echo "🔧 Los archivos de Angular están en un subdirectorio 'browser'"
+        echo ""
+        echo "💡 SOLUCIÓN SUGERIDA:"
+        echo "   Ejecuta: ./fix-browser-directory.sh"
+        echo ""
         return 1
     fi
     
-    # 2. Verificar permisos
-    echo -e "\n${BLUE}🔧 2. Verificando permisos:${NC}"
-    owner=$(stat -c %U "$APP_DIR" 2>/dev/null || echo "unknown")
-    group=$(stat -c %G "$APP_DIR" 2>/dev/null || echo "unknown")
-    perms=$(stat -c %a "$APP_DIR" 2>/dev/null || echo "unknown")
-    
-    echo "Propietario: $owner"
-    echo "Grupo: $group"
-    echo "Permisos: $perms"
-    
-    if [ "$owner" != "www-data" ] || [ "$group" != "www-data" ]; then
-        echo -e "${YELLOW}⚠️ CORRIGIENDO: Permisos incorrectos${NC}"
-        sudo chown -R www-data:www-data "$APP_DIR"
-        sudo chmod -R 755 "$APP_DIR"
-        sudo find "$APP_DIR" -type f -exec chmod 644 {} \;
-        echo -e "${GREEN}✅ Permisos corregidos${NC}"
+    # Verificar index.html
+    if [ -f "/var/www/voltio/index.html" ]; then
+        echo "✅ index.html encontrado"
+        echo "📊 Tamaño: $(stat -c '%s bytes' /var/www/voltio/index.html)"
     else
-        echo -e "${GREEN}✅ Permisos correctos${NC}"
-    fi
-    
-    # 3. Verificar Nginx
-    echo -e "\n${BLUE}🌐 3. Verificando Nginx:${NC}"
-    if sudo nginx -t; then
-        echo -e "${GREEN}✅ Configuración Nginx válida${NC}"
-        
-        # Verificar que Nginx está corriendo
-        if sudo systemctl is-active --quiet nginx; then
-            echo -e "${GREEN}✅ Nginx está corriendo${NC}"
-        else
-            echo -e "${RED}❌ PROBLEMA: Nginx detenido${NC}"
-            sudo systemctl start nginx
-        fi
-    else
-        echo -e "${RED}❌ PROBLEMA: Error en configuración Nginx${NC}"
+        echo "❌ index.html NO encontrado"
         return 1
     fi
     
-    # 4. Test de conectividad local
-    echo -e "\n${BLUE}🔍 4. Test de conectividad local:${NC}"
-    local_response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost 2>/dev/null || echo "000")
+    # Verificar permisos
+    local owner=$(stat -c '%U:%G' /var/www/voltio)
+    local perms=$(stat -c '%a' /var/www/voltio)
     
-    if [ "$local_response" = "200" ]; then
-        echo -e "${GREEN}✅ Servidor responde localmente (200 OK)${NC}"
-    else
-        echo -e "${RED}❌ PROBLEMA: Servidor responde con código $local_response${NC}"
-        
-        # Mostrar logs recientes de error
-        echo -e "\n${YELLOW}📋 Últimos errores de Nginx:${NC}"
-        sudo tail -5 /var/log/nginx/error.log 2>/dev/null || echo "No hay logs de error"
+    echo "🔒 Permisos:"
+    echo "   Propietario: $owner"
+    echo "   Permisos: $perms"
+    
+    if [ "$owner" != "www-data:www-data" ]; then
+        echo "⚠️ Permisos incorrectos detectados"
+        echo "🔧 Corrigiendo permisos..."
+        sudo chown -R www-data:www-data /var/www/voltio
+        sudo chmod -R 755 /var/www/voltio
+        sudo find /var/www/voltio -type f -exec chmod 644 {} \;
+        echo "✅ Permisos corregidos"
     fi
     
-    # 5. Verificar archivos críticos de Angular
-    echo -e "\n${BLUE}📦 5. Verificando archivos de Angular:${NC}"
+    # Prueba de conectividad
+    echo "🌐 Prueba de conectividad:"
+    local response_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost)
+    echo "   Código HTTP: $response_code"
     
-    critical_files=("index.html" "main*.js" "polyfills*.js" "styles*.css")
-    for pattern in "${critical_files[@]}"; do
-        if ls "$APP_DIR"/$pattern 1> /dev/null 2>&1; then
-            echo -e "${GREEN}✅ $pattern encontrado${NC}"
+    if [ "$response_code" = "200" ]; then
+        echo "✅ Servidor funcionando correctamente"
+        return 0
+    else
+        echo "❌ Problema de conectividad detectado"
+        return 1
+    fi
+}
+
+function fix_browser_directory() {
+    echo "� CORRECCIÓN: DIRECTORIO BROWSER"
+    echo "=================================="
+    
+    if [ -d "/var/www/voltio/browser" ]; then
+        echo "📦 Directorio browser detectado - moviendo archivos..."
+        
+        # Backup
+        sudo cp -r /var/www/voltio /var/www/voltio-backup-browser-$(date +%Y%m%d_%H%M%S)
+        
+        # Mover archivos
+        sudo cp -r /var/www/voltio/browser/* /var/www/voltio/
+        sudo rm -rf /var/www/voltio/browser
+        
+        # Permisos
+        sudo chown -R www-data:www-data /var/www/voltio
+        sudo chmod -R 755 /var/www/voltio
+        sudo find /var/www/voltio -type f -exec chmod 644 {} \;
+        
+        # Recargar Nginx
+        sudo systemctl reload nginx
+        
+        echo "✅ Corrección completada"
+        
+        # Verificar
+        if [ -f "/var/www/voltio/index.html" ]; then
+            echo "✅ index.html ahora en la raíz"
         else
-            echo -e "${YELLOW}⚠️ $pattern no encontrado${NC}"
+            echo "❌ Error en la corrección"
         fi
-    done
-    
-    # 6. Verificar estructura típica de Angular
-    echo -e "\n${BLUE}🅰️ 6. Verificando estructura Angular:${NC}"
-    
-    # Buscar archivos típicos de Angular build
-    js_files=$(find "$APP_DIR" -name "*.js" | wc -l)
-    css_files=$(find "$APP_DIR" -name "*.css" | wc -l)
-    html_files=$(find "$APP_DIR" -name "*.html" | wc -l)
-    
-    echo "Archivos JavaScript: $js_files"
-    echo "Archivos CSS: $css_files"
-    echo "Archivos HTML: $html_files"
-    
-    if [ "$js_files" -eq 0 ] || [ "$css_files" -eq 0 ] || [ "$html_files" -eq 0 ]; then
-        echo -e "${YELLOW}⚠️ Estructura incompleta - posible error en el build${NC}"
     else
-        echo -e "${GREEN}✅ Estructura Angular completa${NC}"
-    fi
-    
-    # 7. Resumen y recomendaciones
-    echo -e "\n${BLUE}📋 7. Resumen y Recomendaciones:${NC}"
-    
-    if [ "$local_response" = "200" ] && [ -f "$APP_DIR/index.html" ] && [ "$owner" = "www-data" ]; then
-        echo -e "${GREEN}🎉 DIAGNÓSTICO: Todo parece estar correcto${NC}"
-        echo -e "${GREEN}🌐 Tu aplicación debería estar funcionando en: https://$DOMAIN${NC}"
-    else
-        echo -e "${RED}🚨 PROBLEMAS ENCONTRADOS:${NC}"
-        
-        if [ "$local_response" != "200" ]; then
-            echo -e "${YELLOW}- Servidor no responde correctamente (código: $local_response)${NC}"
-        fi
-        
-        if [ ! -f "$APP_DIR/index.html" ]; then
-            echo -e "${YELLOW}- Archivo index.html faltante${NC}"
-        fi
-        
-        if [ "$owner" != "www-data" ]; then
-            echo -e "${YELLOW}- Permisos incorrectos${NC}"
-        fi
-        
-        echo -e "\n${BLUE}💡 ACCIONES RECOMENDADAS:${NC}"
-        echo "1. Ejecutar: ./server-utils.sh fix403"
-        echo "2. Verificar logs: ./server-utils.sh logs nginx"
-        echo "3. Re-ejecutar el workflow de GitHub Actions"
+        echo "ℹ️ No se detectó directorio browser"
     fi
 }
 
@@ -409,73 +370,56 @@ verify_config() {
 }
 
 # Función para mostrar ayuda
-show_help() {
-    echo -e "${BLUE}🔧 Utilidades del Servidor Voltio${NC}"
-    echo "=================================="
+function show_help() {
+    echo "�️ UTILIDADES DEL SERVIDOR VOLTIO"
+    echo "==================================="
     echo ""
-    echo "Uso: $0 [comando]"
+    echo "Uso: ./server-utils.sh [comando]"
     echo ""
     echo "Comandos disponibles:"
-    echo "  status      - Mostrar estado del servidor"
-    echo "  logs        - Ver logs en tiempo real"
-    echo "  logs nginx  - Ver solo logs de Nginx"
-    echo "  logs system - Ver logs del sistema"
-    echo "  logs ssl    - Ver logs de SSL/Certbot"
-    echo "  backup      - Crear backup completo"
-    echo "  cleanup     - Limpiar archivos temporales"
-    echo "  update      - Actualizar sistema"
-    echo "  verify      - Verificar configuración"
-    echo "  fix403      - Solucionar error 403 Forbidden"
-    echo "  post-deploy - Diagnóstico post-despliegue"
-    echo "  help        - Mostrar esta ayuda"
+    echo "  status       - Estado del servidor y servicios"
+    echo "  logs         - Ver logs de Nginx y aplicación"
+    echo "  backup       - Crear backup de la aplicación"
+    echo "  cleanup      - Limpiar archivos temporales y backups antiguos"
+    echo "  verify       - Verificar configuración completa"
+    echo "  fix403       - Solucionar errores 403 Forbidden"
+    echo "  post-deploy  - Verificación completa post-despliegue"
+    echo "  fix-browser  - Corregir problema de directorio browser (Angular 17+)"
     echo ""
     echo "Ejemplos:"
-    echo "  $0 status"
-    echo "  $0 logs nginx"
-    echo "  $0 backup"
-    echo "  $0 fix403"
-    echo "  $0 post-deploy"
-    echo ""
+    echo "  ./server-utils.sh status"
+    echo "  ./server-utils.sh fix403"
+    echo "  ./server-utils.sh post-deploy"
+    echo "  ./server-utils.sh fix-browser"
 }
 
 # Script principal
-case "$1" in
+case "${1:-help}" in
     "status")
-        show_status
+        check_server_status
         ;;
     "logs")
-        show_logs "$2"
+        show_logs
         ;;
     "backup")
         create_backup
         ;;
     "cleanup")
-        cleanup
-        ;;
-    "update")
-        update_system
+        cleanup_files
         ;;
     "verify")
-        verify_config
+        verify_installation
         ;;
     "fix403")
-        fix_403
+        fix_403_error
         ;;
     "post-deploy")
         post_deploy_check
         ;;
-    "help"|"--help"|"-h")
-        show_help
+    "fix-browser")
+        fix_browser_directory
         ;;
-    "")
-        show_status
-        echo ""
-        echo -e "${YELLOW}💡 Tip: Usa '$0 help' para ver todos los comandos disponibles${NC}"
-        ;;
-    *)
-        echo -e "${RED}❌ Comando desconocido: $1${NC}"
-        echo ""
+    "help"|*)
         show_help
-        exit 1
         ;;
 esac

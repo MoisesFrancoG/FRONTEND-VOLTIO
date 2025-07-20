@@ -55,30 +55,7 @@ jobs:
         with:
           name: voltio-build
 
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        port: 22
-        script: |
-          # Create backup of current deployment
-          if [ -d "/var/www/voltio" ] && [ "$(ls -A /var/www/voltio)" ]; then
-            sudo cp -r /var/www/voltio /var/www/voltio-backup-$(date +%Y%m%d_%H%M%S)
-            echo "✅ Backup created"
-          fi
-          
-          # Ensure directory exists and has correct ownership
-          sudo mkdir -p /var/www/voltio
-          sudo chown -R www-data:www-data /var/www/voltio
-          
-          # Clean current deployment but preserve directory structure
-          sudo find /var/www/voltio -mindepth 1 -delete 2>/dev/null || true
-          
-          # Verify directory is ready
-          echo "📁 Directory prepared: /var/www/voltio"
-          ls -la /var/www/voltio      - name: Copy files to EC2
+      - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -88,76 +65,109 @@ jobs:
           source: voltio-build.tar.gz
           target: /tmp/
 
-    - name: Extract and setup files
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        port: 22
-        script: |
-          # Extract files to temporary location first
-          cd /tmp
-          echo "📦 Extracting Angular application..."
-          
-          # Create temporary extraction directory
-          mkdir -p /tmp/voltio-extract
-          tar -xzf voltio-build.tar.gz -C /tmp/voltio-extract/
-          
-          # Verify extraction
-          echo "📋 Extracted files:"
-          ls -la /tmp/voltio-extract/
-          
-          # Copy files to web directory
-          echo "📁 Copying files to web directory..."
-          sudo cp -r /tmp/voltio-extract/* /var/www/voltio/
-          
-          # Ensure index.html exists
-          if [ ! -f "/var/www/voltio/index.html" ]; then
-            echo "❌ ERROR: index.html not found after extraction!"
-            echo "Files in /var/www/voltio:"
-            ls -la /var/www/voltio/
-            exit 1
-          fi
-          
-          # Set proper permissions
-          echo "🔧 Setting permissions..."
-          sudo chown -R www-data:www-data /var/www/voltio
-          sudo chmod -R 755 /var/www/voltio
-          sudo find /var/www/voltio -type f -exec chmod 644 {} \;
-          
-          # Verify final state
-          echo "✅ Final verification:"
-          echo "Directory ownership: $(stat -c '%U:%G' /var/www/voltio)"
-          echo "Directory permissions: $(stat -c '%a' /var/www/voltio)"
-          echo "Index.html exists: $([ -f /var/www/voltio/index.html ] && echo 'YES' || echo 'NO')"
-          echo "Index.html size: $([ -f /var/www/voltio/index.html ] && stat -c '%s bytes' /var/www/voltio/index.html || echo 'N/A')"
-          
-          # Test Nginx configuration
-          echo "🔧 Testing Nginx configuration..."
-          if sudo nginx -t; then
-            echo "✅ Nginx configuration is valid"
-            sudo systemctl reload nginx
-            echo "🔄 Nginx reloaded successfully"
-          else
-            echo "❌ Nginx configuration error!"
-            exit 1
-          fi
-          
-          # Local connectivity test
-          echo "🔍 Testing local connectivity..."
-          sleep 2
-          if curl -s -o /dev/null -w "%{http_code}" http://localhost | grep -q "200"; then
-            echo "✅ Local server responding with 200 OK"
-          else
-            response_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost)
-            echo "⚠️ Local server response code: $response_code"
-          fi
-          
-          # Clean up temporary files
-          rm -rf /tmp/voltio-extract /tmp/voltio-build.tar.gz
-          
-          echo "🎉 Deployment completed successfully!"  notify:
+      - name: Extract and setup files
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            # Create backup of current deployment
+            if [ -d "/var/www/voltio" ] && [ "$(ls -A /var/www/voltio)" ]; then
+              sudo cp -r /var/www/voltio /var/www/voltio-backup-$(date +%Y%m%d_%H%M%S)
+              echo "✅ Backup created"
+            fi
+            
+            # Ensure directory exists and has correct ownership
+            sudo mkdir -p /var/www/voltio
+            sudo chown -R www-data:www-data /var/www/voltio
+            
+            # Clean current deployment but preserve directory structure
+            sudo find /var/www/voltio -mindepth 1 -delete 2>/dev/null || true
+            
+            # Verify directory is ready
+            echo "📁 Directory prepared: /var/www/voltio"
+            ls -la /var/www/voltio
+            
+            # Extract files to temporary location first
+            cd /tmp
+            echo "📦 Extracting Angular application..."
+            
+            # Create temporary extraction directory
+            mkdir -p /tmp/voltio-extract
+            tar -xzf voltio-build.tar.gz -C /tmp/voltio-extract/
+            
+            # Verify extraction
+            echo "📋 Extracted files:"
+            ls -la /tmp/voltio-extract/
+            
+            # Copy files to web directory
+            echo "📁 Copying files to web directory..."
+            
+            # Check if browser directory exists (Angular 17+)
+            if [ -d "/tmp/voltio-extract/browser" ]; then
+              echo "📦 Found Angular browser directory, copying contents..."
+              sudo cp -r /tmp/voltio-extract/browser/* /var/www/voltio/
+            else
+              echo "📦 Using direct copy for Angular files..."
+              sudo cp -r /tmp/voltio-extract/* /var/www/voltio/
+            fi
+            
+            # Ensure index.html exists
+            if [ ! -f "/var/www/voltio/index.html" ]; then
+              echo "❌ ERROR: index.html not found after extraction!"
+              echo "Files in /var/www/voltio:"
+              ls -la /var/www/voltio/
+              echo "Files in extraction directory:"
+              ls -la /tmp/voltio-extract/
+              if [ -d "/tmp/voltio-extract/browser" ]; then
+                echo "Files in browser subdirectory:"
+                ls -la /tmp/voltio-extract/browser/
+              fi
+              exit 1
+            fi
+            
+            # Set proper permissions
+            echo "🔧 Setting permissions..."
+            sudo chown -R www-data:www-data /var/www/voltio
+            sudo chmod -R 755 /var/www/voltio
+            sudo find /var/www/voltio -type f -exec chmod 644 {} \;
+            
+            # Verify final state
+            echo "✅ Final verification:"
+            echo "Directory ownership: $(stat -c '%U:%G' /var/www/voltio)"
+            echo "Directory permissions: $(stat -c '%a' /var/www/voltio)"
+            echo "Index.html exists: $([ -f /var/www/voltio/index.html ] && echo 'YES' || echo 'NO')"
+            echo "Index.html size: $([ -f /var/www/voltio/index.html ] && stat -c '%s bytes' /var/www/voltio/index.html || echo 'N/A')"
+            
+            # Test Nginx configuration
+            echo "🔧 Testing Nginx configuration..."
+            if sudo nginx -t; then
+              echo "✅ Nginx configuration is valid"
+              sudo systemctl reload nginx
+              echo "🔄 Nginx reloaded successfully"
+            else
+              echo "❌ Nginx configuration error!"
+              exit 1
+            fi
+            
+            # Local connectivity test
+            echo "🔍 Testing local connectivity..."
+            sleep 2
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost | grep -q "200"; then
+              echo "✅ Local server responding with 200 OK"
+            else
+              response_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost)
+              echo "⚠️ Local server response code: $response_code"
+            fi
+            
+            # Clean up temporary files
+            rm -rf /tmp/voltio-extract /tmp/voltio-build.tar.gz
+            
+            echo "🎉 Deployment completed successfully!"
+
+  notify:
     needs: [build, deploy]
     runs-on: ubuntu-latest
     if: always()
