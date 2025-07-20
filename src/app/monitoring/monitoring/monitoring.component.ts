@@ -7,7 +7,7 @@ import { EChartsOption, SeriesOption } from 'echarts';
   styleUrls: ['./monitoring.component.css'],
 })
 export class MonitoringComponent implements OnInit, OnDestroy {
-  private ws: WebSocket;
+  private ws!: WebSocket; // Inicialización diferida
 
   chartOption: EChartsOption & { series: SeriesOption[] } = {
     series: [],
@@ -28,11 +28,13 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   energyData: number[] = [];
 
   selectedChart: 'main' | 'power' | 'energy' = 'main';
+  private wsUrl = 'wss://websocketvoltio.acstree.xyz/ws?topic=pzem&mac=CC:DB:A7:2F:AE:B0';
+  private reconnectInterval = 5000; // 5 segundos
+  private maxReconnectAttempts = 5;
+  private reconnectAttempts = 0;
 
   constructor() {
-    this.ws = new WebSocket(
-      'wss://websocketvoltio.acstree.xyz/ws?topic=pzem&mac=CC:DB:A7:2F:AE:B0'
-    );
+    // WebSocket se inicializa en ngOnInit para mejor control
   }
 
   ngOnInit() {
@@ -51,18 +53,56 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   }
 
   private setupWebSocket() {
-    this.ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const message = JSON.parse(data.content);
-        const payload = JSON.parse(message.message).payload;
-
-        this.updateChartData(payload);
-        console.log('Payload recibido:', payload);
-      } catch (error) {
-        console.error('Error al parsear mensaje WebSocket:', error);
+    try {
+      // Cerrar conexión existente si existe
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.close();
       }
-    };
+
+      console.log('Conectando a WebSocket:', this.wsUrl);
+      this.ws = new WebSocket(this.wsUrl);
+
+      this.ws.onopen = (event) => {
+        console.log('✅ WebSocket conectado exitosamente');
+        this.reconnectAttempts = 0; // Reset counter on successful connection
+      };
+
+      this.ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const message = JSON.parse(data.content);
+          const payload = JSON.parse(message.message).payload;
+
+          this.updateChartData(payload);
+          console.log('Payload recibido:', payload);
+        } catch (error) {
+          console.error('Error al parsear mensaje WebSocket:', error);
+        }
+      };
+
+      this.ws.onerror = (error) => {
+        console.error('❌ Error en WebSocket:', error);
+      };
+
+      this.ws.onclose = (event) => {
+        console.log('🔌 WebSocket desconectado. Código:', event.code, 'Razón:', event.reason);
+        
+        // Intentar reconectar si no fue un cierre intencional
+        if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
+          this.reconnectAttempts++;
+          console.log(`🔄 Intentando reconectar... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+          
+          setTimeout(() => {
+            this.setupWebSocket();
+          }, this.reconnectInterval);
+        } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+          console.error('❌ Máximo número de intentos de reconexión alcanzado');
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Error al configurar WebSocket:', error);
+    }
   }
 
   private updateChartData(payload: any) {

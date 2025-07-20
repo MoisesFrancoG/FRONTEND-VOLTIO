@@ -11,11 +11,12 @@ Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-
 **Cambios de prueba implementados para verificar CI/CD:**
 
 - 🏠 **Home:** Título actualizado con "DEPLOY TEST v2.0", botón verde, emojis
-- 🧭 **Navbar:** Fondo verde, indicador "DEPLOY v2.0", emojis en navegación  
+- 🧭 **Navbar:** Fondo verde, indicador "DEPLOY v2.0", emojis en navegación
 - 📡 **Bluetooth:** Banner de test deploy, títulos actualizados
 - 🔐 **Login:** Indicador verde de deploy activo
 
 **Para verificar el despliegue:**
+
 ```bash
 # Ejecutar script de verificación
 ./deployment/verify-deployment.sh
@@ -26,12 +27,13 @@ Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-
 El proyecto incluye CI/CD completo con GitHub Actions:
 
 - ✅ Build automático en push a `main`/`develop`
-- ✅ Tests automatizados 
+- ✅ Tests automatizados
 - ✅ Despliegue a EC2 Ubuntu con Nginx
 - ✅ SSL automático con Let's Encrypt
 - ✅ Corrección automática de directorio browser (Angular 17+)
 
 ### Scripts de mantenimiento disponibles:
+
 ```bash
 ./deployment/server-utils.sh status     # Estado del servidor
 ./deployment/quick-fix-browser.sh       # Corrección directorio browser

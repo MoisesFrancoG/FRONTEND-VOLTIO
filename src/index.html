@@ -5,6 +5,20 @@
     <title>Voltioapp</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+    <!-- Content Security Policy para WebSockets y recursos -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      connect-src 'self' wss://websocketvoltio.acstree.xyz ws://websocketvoltio.acstree.xyz https://voltio.acstree.xyz;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data: blob:;
+      font-src 'self' data:;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+    ">
+    
     <!-- Favicon de VOLTIO - Múltiples tamaños -->
     <link
       rel="icon"

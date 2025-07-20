@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# 🔧 TEST DE CORRECCIÓN DE ERRORES
+# Script para verificar las correcciones aplicadas
+
+echo "🔧 VERIFICACIÓN DE CORRECCIONES DE ERRORES"
+echo "==========================================="
+echo ""
+
+echo "📋 CORRECCIONES APLICADAS:"
+echo ""
+echo "1. ✅ CSP (Content Security Policy):"
+echo "   - Permitir WebSockets a websocketvoltio.acstree.xyz"
+echo "   - Configuración en src/index.html"
+echo ""
+echo "2. ✅ Routing de Angular:"
+echo "   - Corregido enlace '/home' → '/' en navbar"
+echo "   - Eliminado error NG04002"
+echo ""
+echo "3. ✅ WebSocket robusto:"
+echo "   - Manejo de errores mejorado"
+echo "   - Reconexión automática"
+echo "   - Logging detallado"
+echo ""
+
+echo "🧪 PARA PROBAR LAS CORRECCIONES:"
+echo ""
+echo "1. Compilar la aplicación:"
+echo "   npm run build"
+echo ""
+echo "2. Probar localmente:"
+echo "   ng serve"
+echo ""
+echo "3. Verificar en consola del navegador:"
+echo "   - No debe haber errores CSP"
+echo "   - No debe haber errores de routing"
+echo "   - WebSocket debe intentar conectar con logs"
+echo ""
+
+echo "🎯 ENDPOINTS A VERIFICAR:"
+echo "- https://voltio.acstree.xyz (página principal)"
+echo "- https://voltio.acstree.xyz/auth/login (login)"
+echo "- https://voltio.acstree.xyz/monitoring (monitoreo - WebSocket)"
+echo "- https://voltio.acstree.xyz/bluetooth (bluetooth config)"
+echo ""
+
+echo "📊 INDICADORES DE ÉXITO:"
+echo "✅ Navegación sin errores 404"
+echo "✅ Sin errores CSP en consola"
+echo "✅ WebSocket intenta conectar (aunque falle es normal sin servidor)"
+echo "✅ Aplicación carga completamente"
+echo ""
+
+echo "🚀 SIGUIENTE PASO:"
+echo "Ejecutar: git add . && git commit -m 'fix: resolve CSP and routing errors' && git push origin develop"

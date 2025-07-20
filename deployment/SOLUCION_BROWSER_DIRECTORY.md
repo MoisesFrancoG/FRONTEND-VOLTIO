@@ -3,6 +3,7 @@
 ## 🎯 PROBLEMA ESPECÍFICO IDENTIFICADO: DIRECTORIO BROWSER
 
 ### El problema principal detectado:
+
 Angular 17+ genera los archivos de build en un subdirectorio llamado `browser` dentro del directorio de distribución. Esto causa que:
 
 - Los archivos reales estén en `/var/www/voltio/browser/`
@@ -12,6 +13,7 @@ Angular 17+ genera los archivos de build en un subdirectorio llamado `browser` d
 ### ✅ SOLUCIÓN INMEDIATA
 
 **Opción 1: Script de corrección automática**
+
 ```bash
 # Ejecutar en el servidor EC2
 cd ~/FRONTEND-VOLTIO/deployment
@@ -20,6 +22,7 @@ chmod +x quick-fix-browser.sh
 ```
 
 **Opción 2: Corrección manual**
+
 ```bash
 # Verificar el problema
 ls -la /var/www/voltio/
@@ -35,6 +38,7 @@ sudo systemctl reload nginx
 ```
 
 **Opción 3: Usar utilidades del servidor**
+
 ```bash
 ./server-utils.sh fix-browser
 ```
@@ -44,18 +48,21 @@ sudo systemctl reload nginx
 Después de aplicar la corrección:
 
 1. **Verificar estructura de archivos:**
+
 ```bash
 ls -la /var/www/voltio/
 # Deberías ver index.html directamente en la raíz
 ```
 
 2. **Probar conectividad:**
+
 ```bash
 curl -I http://localhost
 # Debería devolver: HTTP/1.1 200 OK
 ```
 
 3. **Verificar en navegador:**
+
 ```
 https://voltio.acstree.xyz
 ```
@@ -67,17 +74,18 @@ El workflow de GitHub Actions ahora incluye detección automática del directori
 ```yaml
 # Verifica si existe directorio browser (Angular 17+)
 if [ -d "/tmp/voltio-extract/browser" ]; then
-  echo "📦 Found Angular browser directory, copying contents..."
-  sudo cp -r /tmp/voltio-extract/browser/* /var/www/voltio/
+echo "📦 Found Angular browser directory, copying contents..."
+sudo cp -r /tmp/voltio-extract/browser/* /var/www/voltio/
 else
-  echo "📦 Using direct copy for Angular files..."
-  sudo cp -r /tmp/voltio-extract/* /var/www/voltio/
+echo "📦 Using direct copy for Angular files..."
+sudo cp -r /tmp/voltio-extract/* /var/www/voltio/
 fi
 ```
 
 ## 📋 OTRAS POSIBLES CAUSAS DE ERROR 403
 
 ### 1. Permisos incorrectos
+
 ```bash
 # Síntomas: Archivos existen pero no son accesibles
 sudo chown -R www-data:www-data /var/www/voltio
@@ -86,6 +94,7 @@ sudo find /var/www/voltio -type f -exec chmod 644 {} \;
 ```
 
 ### 2. Configuración de Nginx incorrecta
+
 ```bash
 # Verificar configuración
 sudo nginx -t
@@ -93,6 +102,7 @@ sudo systemctl reload nginx
 ```
 
 ### 3. Archivos faltantes
+
 ```bash
 # Verificar que index.html existe
 ls -la /var/www/voltio/index.html
@@ -101,12 +111,14 @@ ls -la /var/www/voltio/index.html
 ## 🛠️ HERRAMIENTAS DE DIAGNÓSTICO
 
 ### Scripts disponibles:
+
 - `quick-fix-browser.sh` - Corrección específica para directorio browser
 - `deploy-diagnosis.sh` - Diagnóstico completo
 - `server-utils.sh` - Utilidades del servidor
 - `fix-403.sh` - Corrección general de errores 403
 
 ### Comandos útiles:
+
 ```bash
 # Diagnóstico completo
 ./deploy-diagnosis.sh
@@ -129,6 +141,7 @@ ls -la /var/www/voltio/index.html
 4. **Verificación:** Scripts de diagnóstico disponibles
 
 ### ✅ Después de la corrección deberías ver:
+
 - ✅ index.html en `/var/www/voltio/index.html`
 - ✅ Respuesta HTTP 200 en `curl http://localhost`
 - ✅ Aplicación Angular funcionando en `https://voltio.acstree.xyz`
