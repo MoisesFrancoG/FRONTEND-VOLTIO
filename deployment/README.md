@@ -239,7 +239,56 @@ sudo ufw status
 
 **Estado actual:** ✅ Todos los tests pasan correctamente (12/12 SUCCESS)
 
-### 🚨 Problema: Error 403 Forbidden en Nginx
+### � Problema: Jobs de GitHub exitosos pero Error 403 persiste
+
+**Síntomas:**
+- ✅ GitHub Actions se completa exitosamente
+- ❌ La aplicación Angular no se despliega (Error 403)
+- ❌ Solo se ve página temporal o error de Nginx
+
+**Causas comunes:**
+1. **Build incompleto:** Los archivos de Angular no se copiaron correctamente
+2. **Permisos perdidos:** Durante el despliegue se perdieron permisos www-data
+3. **Estructura incorrecta:** Los archivos no están en la ubicación correcta
+4. **Cache de Nginx:** El servidor está sirviendo contenido anterior
+
+**Solución paso a paso:**
+
+1. **Diagnóstico inmediato:**
+   ```bash
+   # En el servidor EC2, ejecutar diagnóstico completo
+   chmod +x deploy-diagnosis.sh
+   ./deploy-diagnosis.sh
+   
+   # O usar utilidades
+   ./server-utils.sh post-deploy
+   ```
+
+2. **Verificar estructura de archivos:**
+   ```bash
+   # Verificar que los archivos Angular existen
+   ls -la /var/www/voltio/
+   
+   # Debería mostrar archivos como:
+   # index.html, main*.js, polyfills*.js, styles*.css
+   ```
+
+3. **Corregir permisos post-despliegue:**
+   ```bash
+   sudo chown -R www-data:www-data /var/www/voltio
+   sudo chmod -R 755 /var/www/voltio
+   sudo find /var/www/voltio -type f -exec chmod 644 {} \;
+   sudo systemctl reload nginx
+   ```
+
+4. **Si los archivos Angular faltan, re-ejecutar despliegue:**
+   ```bash
+   # Hacer un cambio mínimo y push
+   git commit --allow-empty -m "🔄 Re-trigger deployment"
+   git push origin develop
+   ```
+
+### �🚨 Problema: Error 403 Forbidden en Nginx
 
 **Síntomas:**
 

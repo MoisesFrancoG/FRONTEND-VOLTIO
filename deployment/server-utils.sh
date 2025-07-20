@@ -160,6 +160,140 @@ update_system() {
     fi
 }
 
+# Función para diagnosticar problemas post-despliegue
+post_deploy_check() {
+    echo -e "${BLUE}🔍 Diagnóstico Post-Despliegue${NC}"
+    echo "===================================="
+    
+    # 1. Verificar estructura de archivos
+    echo -e "\n${BLUE}📁 1. Verificando estructura de archivos:${NC}"
+    if [ -d "$APP_DIR" ]; then
+        echo "Directorio $APP_DIR existe"
+        echo "Contenido:"
+        ls -la "$APP_DIR" | head -10
+        
+        if [ ! -f "$APP_DIR/index.html" ]; then
+            echo -e "${RED}❌ PROBLEMA: index.html no encontrado${NC}"
+            echo "Archivos presentes:"
+            find "$APP_DIR" -name "*.html" -o -name "*.js" -o -name "*.css" | head -5
+        else
+            file_size=$(stat -c%s "$APP_DIR/index.html")
+            echo -e "${GREEN}✅ index.html encontrado (${file_size} bytes)${NC}"
+        fi
+    else
+        echo -e "${RED}❌ PROBLEMA: Directorio $APP_DIR no existe${NC}"
+        return 1
+    fi
+    
+    # 2. Verificar permisos
+    echo -e "\n${BLUE}🔧 2. Verificando permisos:${NC}"
+    owner=$(stat -c %U "$APP_DIR" 2>/dev/null || echo "unknown")
+    group=$(stat -c %G "$APP_DIR" 2>/dev/null || echo "unknown")
+    perms=$(stat -c %a "$APP_DIR" 2>/dev/null || echo "unknown")
+    
+    echo "Propietario: $owner"
+    echo "Grupo: $group"
+    echo "Permisos: $perms"
+    
+    if [ "$owner" != "www-data" ] || [ "$group" != "www-data" ]; then
+        echo -e "${YELLOW}⚠️ CORRIGIENDO: Permisos incorrectos${NC}"
+        sudo chown -R www-data:www-data "$APP_DIR"
+        sudo chmod -R 755 "$APP_DIR"
+        sudo find "$APP_DIR" -type f -exec chmod 644 {} \;
+        echo -e "${GREEN}✅ Permisos corregidos${NC}"
+    else
+        echo -e "${GREEN}✅ Permisos correctos${NC}"
+    fi
+    
+    # 3. Verificar Nginx
+    echo -e "\n${BLUE}🌐 3. Verificando Nginx:${NC}"
+    if sudo nginx -t; then
+        echo -e "${GREEN}✅ Configuración Nginx válida${NC}"
+        
+        # Verificar que Nginx está corriendo
+        if sudo systemctl is-active --quiet nginx; then
+            echo -e "${GREEN}✅ Nginx está corriendo${NC}"
+        else
+            echo -e "${RED}❌ PROBLEMA: Nginx detenido${NC}"
+            sudo systemctl start nginx
+        fi
+    else
+        echo -e "${RED}❌ PROBLEMA: Error en configuración Nginx${NC}"
+        return 1
+    fi
+    
+    # 4. Test de conectividad local
+    echo -e "\n${BLUE}🔍 4. Test de conectividad local:${NC}"
+    local_response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost 2>/dev/null || echo "000")
+    
+    if [ "$local_response" = "200" ]; then
+        echo -e "${GREEN}✅ Servidor responde localmente (200 OK)${NC}"
+    else
+        echo -e "${RED}❌ PROBLEMA: Servidor responde con código $local_response${NC}"
+        
+        # Mostrar logs recientes de error
+        echo -e "\n${YELLOW}📋 Últimos errores de Nginx:${NC}"
+        sudo tail -5 /var/log/nginx/error.log 2>/dev/null || echo "No hay logs de error"
+    fi
+    
+    # 5. Verificar archivos críticos de Angular
+    echo -e "\n${BLUE}📦 5. Verificando archivos de Angular:${NC}"
+    
+    critical_files=("index.html" "main*.js" "polyfills*.js" "styles*.css")
+    for pattern in "${critical_files[@]}"; do
+        if ls "$APP_DIR"/$pattern 1> /dev/null 2>&1; then
+            echo -e "${GREEN}✅ $pattern encontrado${NC}"
+        else
+            echo -e "${YELLOW}⚠️ $pattern no encontrado${NC}"
+        fi
+    done
+    
+    # 6. Verificar estructura típica de Angular
+    echo -e "\n${BLUE}🅰️ 6. Verificando estructura Angular:${NC}"
+    
+    # Buscar archivos típicos de Angular build
+    js_files=$(find "$APP_DIR" -name "*.js" | wc -l)
+    css_files=$(find "$APP_DIR" -name "*.css" | wc -l)
+    html_files=$(find "$APP_DIR" -name "*.html" | wc -l)
+    
+    echo "Archivos JavaScript: $js_files"
+    echo "Archivos CSS: $css_files"
+    echo "Archivos HTML: $html_files"
+    
+    if [ "$js_files" -eq 0 ] || [ "$css_files" -eq 0 ] || [ "$html_files" -eq 0 ]; then
+        echo -e "${YELLOW}⚠️ Estructura incompleta - posible error en el build${NC}"
+    else
+        echo -e "${GREEN}✅ Estructura Angular completa${NC}"
+    fi
+    
+    # 7. Resumen y recomendaciones
+    echo -e "\n${BLUE}📋 7. Resumen y Recomendaciones:${NC}"
+    
+    if [ "$local_response" = "200" ] && [ -f "$APP_DIR/index.html" ] && [ "$owner" = "www-data" ]; then
+        echo -e "${GREEN}🎉 DIAGNÓSTICO: Todo parece estar correcto${NC}"
+        echo -e "${GREEN}🌐 Tu aplicación debería estar funcionando en: https://$DOMAIN${NC}"
+    else
+        echo -e "${RED}🚨 PROBLEMAS ENCONTRADOS:${NC}"
+        
+        if [ "$local_response" != "200" ]; then
+            echo -e "${YELLOW}- Servidor no responde correctamente (código: $local_response)${NC}"
+        fi
+        
+        if [ ! -f "$APP_DIR/index.html" ]; then
+            echo -e "${YELLOW}- Archivo index.html faltante${NC}"
+        fi
+        
+        if [ "$owner" != "www-data" ]; then
+            echo -e "${YELLOW}- Permisos incorrectos${NC}"
+        fi
+        
+        echo -e "\n${BLUE}💡 ACCIONES RECOMENDADAS:${NC}"
+        echo "1. Ejecutar: ./server-utils.sh fix403"
+        echo "2. Verificar logs: ./server-utils.sh logs nginx"
+        echo "3. Re-ejecutar el workflow de GitHub Actions"
+    fi
+}
+
 # Función para solucionar error 403 Forbidden
 fix_403() {
     echo -e "${RED}🔧 Solucionando Error 403 Forbidden${NC}"
@@ -292,6 +426,7 @@ show_help() {
     echo "  update      - Actualizar sistema"
     echo "  verify      - Verificar configuración"
     echo "  fix403      - Solucionar error 403 Forbidden"
+    echo "  post-deploy - Diagnóstico post-despliegue"
     echo "  help        - Mostrar esta ayuda"
     echo ""
     echo "Ejemplos:"
@@ -299,6 +434,7 @@ show_help() {
     echo "  $0 logs nginx"
     echo "  $0 backup"
     echo "  $0 fix403"
+    echo "  $0 post-deploy"
     echo ""
 }
 
@@ -324,6 +460,9 @@ case "$1" in
         ;;
     "fix403")
         fix_403
+        ;;
+    "post-deploy")
+        post_deploy_check
         ;;
     "help"|"--help"|"-h")
         show_help
