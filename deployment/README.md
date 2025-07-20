@@ -239,6 +239,52 @@ sudo ufw status
 
 **Estado actual:** ✅ Todos los tests pasan correctamente (12/12 SUCCESS)
 
+### 🚨 Problema: Error 403 Forbidden en Nginx
+
+**Síntomas:**
+
+- Página muestra "403 Forbidden"
+- Nginx está funcionando pero no puede servir archivos
+
+**Causas comunes:**
+
+1. Directorio `/var/www/voltio` no existe o está vacío
+2. Permisos incorrectos (no es propiedad de www-data)
+3. Archivo `index.html` faltante o corrupto
+4. Configuración de Nginx incorrecta
+
+**Solución rápida:**
+
+```bash
+# En el servidor EC2
+./server-utils.sh fix403
+
+# O ejecutar el script de diagnóstico completo
+chmod +x fix-403.sh
+./fix-403.sh
+```
+
+**Solución manual:**
+
+```bash
+# 1. Crear directorio si no existe
+sudo mkdir -p /var/www/voltio
+
+# 2. Corregir permisos
+sudo chown -R www-data:www-data /var/www/voltio
+sudo chmod -R 755 /var/www/voltio
+
+# 3. Crear archivo index.html temporal
+sudo tee /var/www/voltio/index.html > /dev/null << 'EOF'
+<!DOCTYPE html>
+<html><head><title>Voltio</title></head>
+<body><h1>Voltio - Servidor funcionando</h1></body></html>
+EOF
+
+# 4. Recargar Nginx
+sudo systemctl reload nginx
+```
+
 ### Problema: El despliegue falla en GitHub Actions
 
 **Solución:**

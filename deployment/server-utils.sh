@@ -160,6 +160,92 @@ update_system() {
     fi
 }
 
+# Función para solucionar error 403 Forbidden
+fix_403() {
+    echo -e "${RED}🔧 Solucionando Error 403 Forbidden${NC}"
+    echo "====================================="
+    
+    # Verificar que el directorio existe
+    if [ ! -d "$APP_DIR" ]; then
+        echo -e "${YELLOW}⚠️ Creando directorio de aplicación...${NC}"
+        sudo mkdir -p "$APP_DIR"
+    fi
+    
+    # Corregir permisos
+    echo -e "${BLUE}🔧 Corrigiendo permisos...${NC}"
+    sudo chown -R www-data:www-data "$APP_DIR"
+    sudo chmod -R 755 "$APP_DIR"
+    
+    # Verificar/crear archivo index.html
+    if [ ! -f "$APP_DIR/index.html" ] || [ ! -s "$APP_DIR/index.html" ]; then
+        echo -e "${YELLOW}⚠️ Creando archivo index.html...${NC}"
+        sudo tee "$APP_DIR/index.html" > /dev/null << 'EOF'
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voltio - Error 403 Solucionado</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0; padding: 0; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; text-align: center;
+        }
+        .container {
+            padding: 2rem; border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        p { font-size: 1.2rem; opacity: 0.9; margin: 0.5rem 0; }
+        .status { color: #4ade80; font-weight: bold; }
+        .fixed { color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 0.5rem; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ Voltio</h1>
+        <div class="fixed">
+            <p>✅ Error 403 Forbidden Solucionado</p>
+        </div>
+        <p class="status">🔧 Servidor configurado correctamente</p>
+        <p>Permisos corregidos</p>
+        <p>Listo para recibir la aplicación Angular</p>
+        <small>$(date)</small>
+    </div>
+</body>
+</html>
+EOF
+        sudo chown www-data:www-data "$APP_DIR/index.html"
+        sudo chmod 644 "$APP_DIR/index.html"
+    fi
+    
+    # Verificar configuración de Nginx
+    echo -e "${BLUE}🔧 Verificando configuración de Nginx...${NC}"
+    if sudo nginx -t; then
+        echo -e "${GREEN}✅ Configuración válida${NC}"
+        sudo systemctl reload nginx
+    else
+        echo -e "${RED}❌ Error en configuración de Nginx${NC}"
+        return 1
+    fi
+    
+    # Test final
+    echo -e "${BLUE}🔍 Verificando solución...${NC}"
+    sleep 2
+    
+    local_test=$(curl -s -o /dev/null -w "%{http_code}" http://localhost 2>/dev/null || echo "000")
+    if [ "$local_test" = "200" ]; then
+        echo -e "${GREEN}✅ Error 403 solucionado - servidor responde correctamente${NC}"
+        echo -e "${GREEN}🌐 Intenta acceder nuevamente a: https://$DOMAIN${NC}"
+    else
+        echo -e "${YELLOW}⚠️ Código de respuesta: $local_test${NC}"
+        echo -e "${YELLOW}💡 Si persiste el problema, revisar logs: sudo tail -f /var/log/nginx/error.log${NC}"
+    fi
+}
+
 # Función para verificar la configuración
 verify_config() {
     echo -e "${BLUE}🔧 Verificando configuración...${NC}"
@@ -205,12 +291,14 @@ show_help() {
     echo "  cleanup     - Limpiar archivos temporales"
     echo "  update      - Actualizar sistema"
     echo "  verify      - Verificar configuración"
+    echo "  fix403      - Solucionar error 403 Forbidden"
     echo "  help        - Mostrar esta ayuda"
     echo ""
     echo "Ejemplos:"
     echo "  $0 status"
     echo "  $0 logs nginx"
     echo "  $0 backup"
+    echo "  $0 fix403"
     echo ""
 }
 
@@ -233,6 +321,9 @@ case "$1" in
         ;;
     "verify")
         verify_config
+        ;;
+    "fix403")
+        fix_403
         ;;
     "help"|"--help"|"-h")
         show_help
