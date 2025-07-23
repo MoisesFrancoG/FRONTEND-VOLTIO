@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { AuthGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
   {
@@ -14,11 +15,13 @@ const routes: Routes = [
     path: 'monitoring',
     loadChildren: () =>
       import('./monitoring/monitoring.module').then((m) => m.MonitoringModule),
+    canActivate: [AuthGuard],
   },
   {
     path: 'bluetooth',
     loadChildren: () =>
       import('./bluetooth/bluetooth.module').then((m) => m.BluetoothModule),
+    canActivate: [AuthGuard],
   },
 ];
 

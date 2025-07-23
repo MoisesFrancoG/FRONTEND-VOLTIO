@@ -1,27 +1,75 @@
 <div class="min-h-screen bg-gray-100 flex">
   <!-- Barra lateral -->
   <aside class="w-64 bg-white rounded-r-lg shadow-lg p-6 flex flex-col gap-6">
-    <button
-      class="py-3 px-4 rounded-lg font-semibold text-gray-700 hover:bg-[#ffe69c] transition"
-      [class.bg-yellow-200]="selectedChart === 'main'"
-      (click)="setChart('main')"
-    >
-      Voltaje y Corriente
-    </button>
-    <button
-      class="py-3 px-4 rounded-lg font-semibold text-gray-700 hover:bg-[#ffe69c] transition"
-      [class.bg-yellow-200]="selectedChart === 'power'"
-      (click)="setChart('power')"
-    >
-      Potencia
-    </button>
-    <button
-      class="py-3 px-4 rounded-lg font-semibold text-gray-700 hover:bg-[#ffe69c] transition"
-      [class.bg-yellow-200]="selectedChart === 'energy'"
-      (click)="setChart('energy')"
-    >
-      Energía
-    </button>
+    <!-- Información de la MAC -->
+    <div class="bg-gray-50 rounded-lg p-4 border">
+      <h3 class="text-sm font-semibold text-gray-700 mb-2">
+        Dispositivo ESP32
+      </h3>
+      <p class="text-xs text-gray-600 mb-2">MAC Address:</p>
+      <code
+        class="text-xs bg-gray-200 px-2 py-1 rounded block mb-3"
+        [class.text-green-600]="
+          getCurrentMac() && getCurrentMac() !== 'CC:DB:A7:2F:AE:B0'
+        "
+        [class.text-orange-600]="getCurrentMac() === 'CC:DB:A7:2F:AE:B0'"
+        >{{ getCurrentMac() || "No disponible" }}</code
+      >
+
+      <!-- Estado de conexión WebSocket -->
+      <p class="text-xs text-gray-600 mb-2">Estado WebSocket:</p>
+      <span
+        class="text-xs px-2 py-1 rounded block mb-3"
+        [class.bg-green-200]="isWebSocketConnected()"
+        [class.text-green-700]="isWebSocketConnected()"
+        [class.bg-red-200]="!isWebSocketConnected()"
+        [class.text-red-700]="!isWebSocketConnected()"
+      >
+        {{ getWebSocketStatus() }}
+      </span>
+
+      <div class="flex flex-col gap-2">
+        <button
+          (click)="refreshMacAddress()"
+          class="w-full py-2 px-3 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition"
+        >
+          Actualizar MAC
+        </button>
+        <button
+          (click)="connectWithCurrentMac()"
+          class="w-full py-2 px-3 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition"
+          [disabled]="!getCurrentMac()"
+        >
+          Conectar WebSocket
+        </button>
+      </div>
+    </div>
+
+    <!-- Botones de navegación -->
+    <div class="border-t pt-4">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3">Gráficas</h3>
+      <button
+        class="w-full py-3 px-4 rounded-lg font-semibold text-gray-700 hover:bg-[#ffe69c] transition mb-2"
+        [class.bg-yellow-200]="selectedChart === 'main'"
+        (click)="setChart('main')"
+      >
+        Voltaje y Corriente
+      </button>
+      <button
+        class="w-full py-3 px-4 rounded-lg font-semibold text-gray-700 hover:bg-[#ffe69c] transition mb-2"
+        [class.bg-yellow-200]="selectedChart === 'power'"
+        (click)="setChart('power')"
+      >
+        Potencia
+      </button>
+      <button
+        class="w-full py-3 px-4 rounded-lg font-semibold text-gray-700 hover:bg-[#ffe69c] transition"
+        [class.bg-yellow-200]="selectedChart === 'energy'"
+        (click)="setChart('energy')"
+      >
+        Energía
+      </button>
+    </div>
   </aside>
 
   <!-- Vista principal de la gráfica -->

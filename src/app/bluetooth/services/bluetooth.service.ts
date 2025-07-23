@@ -16,6 +16,11 @@ export class BluetoothService {
   private readonly WIFI_PASS_CHAR_UUID = 'a3250098-c914-4a49-8588-e5263a8a385d';
   private readonly SAVE_CONFIG_CHAR_UUID =
     '7d3b9e43-e65a-4467-9b65-6c70188235f3';
+  private readonly MAC_ADDRESS_CHAR_UUID =
+    '12345678-1234-1234-1234-1234567890ab';
+
+  // Clave para localStorage
+  private readonly MAC_STORAGE_KEY = 'esp32_mac_address';
 
   // Estados observables
   private configurationStatusSubject = new BehaviorSubject<ConfigurationStatus>(
@@ -25,10 +30,12 @@ export class BluetoothService {
     null
   );
   private errorMessageSubject = new BehaviorSubject<string>('');
+  private macAddressSubject = new BehaviorSubject<string>('');
 
   public configurationStatus$ = this.configurationStatusSubject.asObservable();
   public connectedDevice$ = this.connectedDeviceSubject.asObservable();
   public errorMessage$ = this.errorMessageSubject.asObservable();
+  public macAddress$ = this.macAddressSubject.asObservable();
 
   private bluetoothDevice: BluetoothDevice | null = null;
   private nativeBluetoothDevice: any = null; // Dispositivo nativo de Web Bluetooth API
@@ -37,6 +44,28 @@ export class BluetoothService {
 
   constructor() {
     this.checkBluetoothSupport();
+    this.loadMacFromStorage();
+  }
+
+  private loadMacFromStorage(): void {
+    try {
+      const savedMac = localStorage.getItem(this.MAC_STORAGE_KEY);
+      if (savedMac) {
+        console.log('MAC cargada desde localStorage:', savedMac);
+        this.macAddressSubject.next(savedMac);
+      }
+    } catch (error) {
+      console.warn('Error al cargar MAC desde localStorage:', error);
+    }
+  }
+
+  private saveMacToStorage(macAddress: string): void {
+    try {
+      localStorage.setItem(this.MAC_STORAGE_KEY, macAddress);
+      console.log('MAC guardada en localStorage:', macAddress);
+    } catch (error) {
+      console.warn('Error al guardar MAC en localStorage:', error);
+    }
   }
 
   private checkBluetoothSupport(): boolean {
@@ -123,6 +152,20 @@ export class BluetoothService {
       this.bluetoothDevice.connected = true;
       this.setStatus(ConfigurationStatus.CONNECTED);
       this.connectedDeviceSubject.next(this.bluetoothDevice);
+
+      // Obtener automáticamente la dirección MAC después de conectarse
+      try {
+        const macAddress = await this.getMacAddress();
+        if (macAddress && this.bluetoothDevice) {
+          this.bluetoothDevice.macAddress = macAddress;
+          this.connectedDeviceSubject.next(this.bluetoothDevice);
+        }
+      } catch (error) {
+        console.warn(
+          'No se pudo obtener la dirección MAC automáticamente:',
+          error
+        );
+      }
 
       // Configurar event listeners para desconexión
       device.addEventListener('gattserverdisconnected', () => {
@@ -220,6 +263,42 @@ export class BluetoothService {
     }
   }
 
+  async getMacAddress(): Promise<string> {
+    if (!this.configService || !this.bluetoothDevice?.connected) {
+      this.setError('No hay conexión activa con el dispositivo');
+      return '';
+    }
+
+    try {
+      console.log('Obteniendo dirección MAC del ESP32...');
+
+      // Obtener la característica de MAC address
+      const macChar = await this.configService.getCharacteristic(
+        this.MAC_ADDRESS_CHAR_UUID
+      );
+      console.log('✅ Característica MAC obtenida');
+
+      // Leer el valor de la característica
+      const value = await macChar.readValue();
+
+      // Convertir ArrayBuffer a string
+      const decoder = new TextDecoder('utf-8');
+      const macAddress = decoder.decode(value);
+
+      console.log('✅ Dirección MAC recibida:', macAddress);
+
+      // Guardar en localStorage y actualizar el observable
+      this.saveMacToStorage(macAddress);
+      this.macAddressSubject.next(macAddress);
+
+      return macAddress;
+    } catch (error: any) {
+      console.error('Error al obtener dirección MAC:', error);
+      this.setError(`Error al obtener MAC: ${error.message}`);
+      return '';
+    }
+  }
+
   private handleDisconnection(): void {
     if (this.bluetoothDevice) {
       this.bluetoothDevice.connected = false;
@@ -228,6 +307,9 @@ export class BluetoothService {
 
     this.gattServer = null;
     this.configService = null;
+
+    // Limpiar la dirección MAC al desconectarse
+    this.macAddressSubject.next('');
 
     // Si estaba configurado, mantener ese estado, sino volver a búsqueda
     if (
@@ -249,6 +331,7 @@ export class BluetoothService {
     this.bluetoothDevice = null;
     this.nativeBluetoothDevice = null;
     this.connectedDeviceSubject.next(null);
+    this.macAddressSubject.next('');
     this.setStatus(ConfigurationStatus.SEARCHING);
     this.setError('');
   }
@@ -280,6 +363,7 @@ export class BluetoothService {
         { name: 'SSID', uuid: this.WIFI_SSID_CHAR_UUID },
         { name: 'Password', uuid: this.WIFI_PASS_CHAR_UUID },
         { name: 'Save Config', uuid: this.SAVE_CONFIG_CHAR_UUID },
+        { name: 'MAC Address', uuid: this.MAC_ADDRESS_CHAR_UUID },
       ];
 
       for (const charInfo of expectedChars) {
@@ -313,6 +397,23 @@ export class BluetoothService {
       gattConnected: this.gattServer?.connected,
       serviceConnected: !!this.configService,
       currentStatus: this.configurationStatusSubject.value,
+      macAddress: this.macAddressSubject.value,
     };
+  }
+
+  // Getter para obtener la dirección MAC actual
+  getCurrentMacAddress(): string {
+    return this.macAddressSubject.value;
+  }
+
+  // Método para limpiar la MAC del localStorage
+  clearMacFromStorage(): void {
+    try {
+      localStorage.removeItem(this.MAC_STORAGE_KEY);
+      this.macAddressSubject.next('');
+      console.log('MAC eliminada del localStorage');
+    } catch (error) {
+      console.warn('Error al eliminar MAC del localStorage:', error);
+    }
   }
 }
