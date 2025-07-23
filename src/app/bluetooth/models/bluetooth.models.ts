@@ -3,6 +3,7 @@ export interface BluetoothDevice {
   name: string;
   connected: boolean;
   lastSeen?: Date;
+  macAddress?: string;
 }
 
 export interface WiFiCredentials {
@@ -34,4 +35,19 @@ export interface BluetoothService {
 export interface BluetoothCharacteristic {
   uuid: string;
   properties: string[];
+}
+
+export interface SensorData {
+  macAddress: string;
+  voltage: number;
+  current: number;
+  power: number;
+  energy: number;
+  timestamp: Date;
+}
+
+export interface ESP32Device extends BluetoothDevice {
+  macAddress: string;
+  isMonitoring: boolean;
+  lastDataReceived?: Date;
 }

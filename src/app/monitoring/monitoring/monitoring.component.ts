@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { EChartsOption, SeriesOption } from 'echarts';
+import { BluetoothService } from '../../bluetooth/services/bluetooth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-monitoring',
@@ -8,6 +10,8 @@ import { EChartsOption, SeriesOption } from 'echarts';
 })
 export class MonitoringComponent implements OnInit, OnDestroy {
   private ws!: WebSocket; // Inicialización diferida
+  private macAddressSubscription!: Subscription;
+  private currentMacAddress = ''; // MAC por defecto
 
   chartOption: EChartsOption & { series: SeriesOption[] } = {
     series: [],
@@ -28,17 +32,18 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   energyData: number[] = [];
 
   selectedChart: 'main' | 'power' | 'energy' = 'main';
-  private wsUrl = 'wss://websocketvoltio.acstree.xyz/ws?topic=pzem&mac=CC:DB:A7:2F:AE:B0';
+  private wsUrl = 'wss://websocketvoltio.acstree.xyz/ws?topic=pzem&mac=';
   private reconnectInterval = 5000; // 5 segundos
   private maxReconnectAttempts = 5;
   private reconnectAttempts = 0;
 
-  constructor() {
+  constructor(private bluetoothService: BluetoothService) {
     // WebSocket se inicializa en ngOnInit para mejor control
   }
 
   ngOnInit() {
     this.initCharts();
+    this.subscribeToMacAddress();
     this.setupWebSocket();
   }
 
@@ -46,21 +51,134 @@ export class MonitoringComponent implements OnInit, OnDestroy {
     if (this.ws) {
       this.ws.close();
     }
+    if (this.macAddressSubscription) {
+      this.macAddressSubscription.unsubscribe();
+    }
+  }
+
+  private subscribeToMacAddress() {
+    // Verificar si ya hay una MAC disponible (cargada desde localStorage)
+    const existingMac = this.bluetoothService.getCurrentMacAddress();
+    if (existingMac) {
+      console.log('MAC cargada desde localStorage:', existingMac);
+      this.currentMacAddress = existingMac;
+    }
+
+    // Suscribirse a cambios en la dirección MAC
+    this.macAddressSubscription = this.bluetoothService.macAddress$.subscribe(
+      (macAddress) => {
+        if (macAddress && macAddress !== this.currentMacAddress) {
+          console.log('Nueva dirección MAC recibida:', macAddress);
+          this.currentMacAddress = macAddress;
+          this.reconnectWithNewMac();
+        }
+      }
+    );
+  }
+
+  private reconnectWithNewMac() {
+    console.log(
+      'Reconectando WebSocket con nueva MAC:',
+      this.currentMacAddress
+    );
+
+    // Cerrar conexión actual si existe
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.close();
+    }
+
+    // Reiniciar contadores de reconexión
+    this.reconnectAttempts = 0;
+
+    // Configurar WebSocket con nueva MAC
+    this.setupWebSocket();
   }
 
   setChart(chart: 'main' | 'power' | 'energy') {
     this.selectedChart = chart;
   }
 
+  async refreshMacAddress() {
+    try {
+      console.log('🔄 Obteniendo dirección MAC del dispositivo...');
+      const macAddress = await this.bluetoothService.getMacAddress();
+      if (macAddress) {
+        console.log('✅ MAC obtenida exitosamente:', macAddress);
+        // La suscripción automáticamente actualizará currentMacAddress y reconectará
+      } else {
+        console.warn('⚠️ No se pudo obtener la dirección MAC');
+      }
+    } catch (error) {
+      console.error('❌ Error al obtener MAC:', error);
+    }
+  }
+
+  // Método para conectar manualmente si tenemos MAC válida
+  connectWithCurrentMac() {
+    if (this.isValidMac(this.currentMacAddress)) {
+      console.log('🔌 Conectando manualmente con MAC:', this.currentMacAddress);
+      this.setupWebSocket();
+    } else {
+      console.warn('⚠️ No se puede conectar sin una MAC válida');
+    }
+  }
+
+  getCurrentMac(): string {
+    return this.currentMacAddress;
+  }
+
+  getWebSocketStatus(): string {
+    if (!this.ws) return 'No conectado';
+
+    switch (this.ws.readyState) {
+      case WebSocket.CONNECTING:
+        return 'Conectando...';
+      case WebSocket.OPEN:
+        return 'Conectado';
+      case WebSocket.CLOSING:
+        return 'Cerrando...';
+      case WebSocket.CLOSED:
+        return 'Desconectado';
+      default:
+        return 'Desconocido';
+    }
+  }
+
+  isWebSocketConnected(): boolean {
+    return this.ws?.readyState === WebSocket.OPEN;
+  }
+
+  private isValidMac(mac: string): boolean {
+    // Verificar si la MAC tiene un formato válido (XX:XX:XX:XX:XX:XX)
+    const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+    return macRegex.test(mac);
+  }
+
   private setupWebSocket() {
     try {
+      // Verificar si tenemos una MAC válida
+      if (!this.isValidMac(this.currentMacAddress)) {
+        console.warn(
+          '⚠️ No hay MAC válida disponible. MAC actual:',
+          this.currentMacAddress
+        );
+        console.log(
+          '💡 Intenta conectarte al ESP32 desde la configuración Bluetooth para obtener la MAC'
+        );
+        return;
+      }
+
       // Cerrar conexión existente si existe
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
         this.ws.close();
       }
 
-      console.log('Conectando a WebSocket:', this.wsUrl);
-      this.ws = new WebSocket(this.wsUrl);
+      // Construir URL con la MAC actual
+      const fullWsUrl = `${this.wsUrl}${this.currentMacAddress}`;
+      console.log('🔌 Conectando a WebSocket con MAC:', this.currentMacAddress);
+      console.log('🌐 URL completa:', fullWsUrl);
+
+      this.ws = new WebSocket(fullWsUrl);
 
       this.ws.onopen = (event) => {
         console.log('✅ WebSocket conectado exitosamente');
@@ -85,13 +203,23 @@ export class MonitoringComponent implements OnInit, OnDestroy {
       };
 
       this.ws.onclose = (event) => {
-        console.log('🔌 WebSocket desconectado. Código:', event.code, 'Razón:', event.reason);
-        
+        console.log(
+          '🔌 WebSocket desconectado. Código:',
+          event.code,
+          'Razón:',
+          event.reason
+        );
+
         // Intentar reconectar si no fue un cierre intencional
-        if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
+        if (
+          event.code !== 1000 &&
+          this.reconnectAttempts < this.maxReconnectAttempts
+        ) {
           this.reconnectAttempts++;
-          console.log(`🔄 Intentando reconectar... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-          
+          console.log(
+            `🔄 Intentando reconectar... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
+          );
+
           setTimeout(() => {
             this.setupWebSocket();
           }, this.reconnectInterval);
@@ -99,7 +227,6 @@ export class MonitoringComponent implements OnInit, OnDestroy {
           console.error('❌ Máximo número de intentos de reconexión alcanzado');
         }
       };
-
     } catch (error) {
       console.error('❌ Error al configurar WebSocket:', error);
     }
