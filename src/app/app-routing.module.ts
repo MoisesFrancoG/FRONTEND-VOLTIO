@@ -29,6 +29,13 @@ const routes: Routes = [
       import('./devices/devices.module').then((m) => m.DevicesModule),
     canActivate: [AuthGuard],
   },
+  {
+    path: 'historial',
+    loadChildren: () =>
+      import('./historial/historial.module').then((m) => m.HistorialModule),
+
+    canActivate: [AuthGuard],
+  },
 ];
 
 @NgModule({

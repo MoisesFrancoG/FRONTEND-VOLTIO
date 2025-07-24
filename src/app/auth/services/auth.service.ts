@@ -36,17 +36,11 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(
-      `${this.apiUrl}/users/login`,
-      credentials
-    );
+    return this.http.post<AuthResponse>(`${this.apiUrl}/users/login`, credentials);
   }
 
   register(userData: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(
-      `${this.apiUrl}/users/register`,
-      userData
-    );
+    return this.http.post<AuthResponse>(`${this.apiUrl}/users/register`, userData);
   }
 
   logout(): void {
