@@ -23,6 +23,7 @@ export class HistorialComponent implements OnInit {
   isLoading: boolean = false;
   hasError: boolean = false;
   errorMessage: string = '';
+  noPzemDevices: boolean = false; // Nueva propiedad para identificar error específico
 
   // Datos para diferentes tipos de gráficas
   histogramData: ChartData[] = [];
@@ -151,6 +152,7 @@ export class HistorialComponent implements OnInit {
   loadData(): void {
     this.isLoading = true;
     this.hasError = false;
+    this.noPzemDevices = false; // Reset de la nueva propiedad
     this.errorMessage = '';
 
     // Verificar autenticación antes de hacer la llamada
@@ -172,7 +174,7 @@ export class HistorialComponent implements OnInit {
     console.log('Token activo:', this.authService.getToken());
 
     this.historialService
-      .getEnergyHistory('CC:DB:A7:2F:AE:B0', this.selectedPeriod)
+      .getEnergyHistory(undefined, this.selectedPeriod)
       .subscribe({
         next: (data) => {
           if (data && data.length > 0) {
@@ -198,7 +200,13 @@ export class HistorialComponent implements OnInit {
           this.hasError = true;
 
           // Mostrar mensaje específico según el tipo de error
-          if (error.message?.includes('token de autenticación')) {
+          if (
+            error.message?.includes('No tienes dispositivos PZEM registrados')
+          ) {
+            this.noPzemDevices = true; // Marcar como error específico de no PZEM
+            this.errorMessage =
+              'No tienes dispositivos PZEM registrados. Para ver el historial de energía, primero debes registrar un dispositivo tipo PZEM en la sección de Dispositivos.';
+          } else if (error.message?.includes('token de autenticación')) {
             this.errorMessage =
               'Error de autenticación. Por favor, inicia sesión nuevamente.';
           } else if (error.status === 401) {
@@ -241,6 +249,11 @@ export class HistorialComponent implements OnInit {
     this.router.navigate(['/auth/login'], {
       queryParams: { returnUrl: '/historial' },
     });
+  }
+
+  // Método para redireccionar a la sección de dispositivos
+  goToDevices(): void {
+    this.router.navigate(['/devices']);
   }
 
   // Método para cambiar el tipo de gráfica

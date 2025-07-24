@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { EChartsOption, SeriesOption } from 'echarts';
-import { BluetoothService } from '../../bluetooth/services/bluetooth.service';
-import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
+import { EChartsOption } from 'echarts';
+import { AuthService } from '../../auth/services/auth.service';
+import { DeviceService, Device } from '../../devices/services/device.service';
 
 @Component({
   selector: 'app-monitoring',
@@ -9,250 +10,263 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./monitoring.component.css'],
 })
 export class MonitoringComponent implements OnInit, OnDestroy {
-  private ws!: WebSocket; // Inicialización diferida
-  private macAddressSubscription!: Subscription;
-  private currentMacAddress = ''; // MAC por defecto
+  // Estados de la vista
+  currentView: 'device-selection' | 'monitoring' = 'device-selection';
+  isLoading = false;
+  hasError = false;
+  errorMessage = '';
 
-  chartOption: EChartsOption & { series: SeriesOption[] } = {
-    series: [],
-  };
+  // Datos de dispositivos
+  userDevices: Device[] = [];
+  selectedDevice: Device | null = null;
 
-  powerChartOption: EChartsOption & { series: SeriesOption[] } = {
-    series: [],
-  };
+  // WebSocket
+  private webSocket: WebSocket | null = null;
+  isWebSocketConnected = false;
 
-  energyChartOption: EChartsOption & { series: SeriesOption[] } = {
-    series: [],
-  };
-
+  // Datos para gráficas
   timeData: string[] = [];
   voltageData: number[] = [];
   currentData: number[] = [];
   powerData: number[] = [];
   energyData: number[] = [];
+  frequencyData: number[] = [];
+  powerFactorData: number[] = [];
 
+  // Configuración de gráficas
   selectedChart: 'main' | 'power' | 'energy' = 'main';
-  private wsUrl = 'wss://websocketvoltio.acstree.xyz/ws?topic=pzem&mac=';
-  private reconnectInterval = 5000; // 5 segundos
-  private maxReconnectAttempts = 5;
-  private reconnectAttempts = 0;
+  chartOption: EChartsOption = {};
+  powerChartOption: EChartsOption = {};
+  energyChartOption: EChartsOption = {};
 
-  constructor(private bluetoothService: BluetoothService) {
-    // WebSocket se inicializa en ngOnInit para mejor control
+  // Variables por tipo de dispositivo
+  deviceVariables: { [key: number]: string[] } = {
+    1: [
+      // NODO_CONTROL_PZEM
+      'voltage',
+      'current',
+      'power',
+      'energy',
+      'frequency',
+      'powerFactor',
+    ],
+    2: ['temperature', 'humidity', 'light'], // NODO_CONTROL_IR
+    3: ['temperature', 'humidity', 'light', 'pressure'], // NODO_SENSADO_RPI
+  };
+
+  constructor(
+    private authService: AuthService,
+    private deviceService: DeviceService,
+    public router: Router
+  ) {
+    console.log('🔧 MonitoringComponent: Constructor llamado');
+    this.initializeChartOptions();
   }
 
-  ngOnInit() {
-    this.initCharts();
-    this.subscribeToMacAddress();
-    this.setupWebSocket();
-  }
+  ngOnInit(): void {
+    console.log('🚀 MonitoringComponent: ngOnInit iniciado');
 
-  ngOnDestroy() {
-    if (this.ws) {
-      this.ws.close();
-    }
-    if (this.macAddressSubscription) {
-      this.macAddressSubscription.unsubscribe();
-    }
-  }
+    // Debug de autenticación
+    const token = this.authService.getToken();
+    console.log('🔑 Token disponible:', !!token);
+    console.log('🔑 Token length:', token?.length || 0);
 
-  private subscribeToMacAddress() {
-    // Verificar si ya hay una MAC disponible (cargada desde localStorage)
-    const existingMac = this.bluetoothService.getCurrentMacAddress();
-    if (existingMac) {
-      console.log('MAC cargada desde localStorage:', existingMac);
-      this.currentMacAddress = existingMac;
-    }
-
-    // Suscribirse a cambios en la dirección MAC
-    this.macAddressSubscription = this.bluetoothService.macAddress$.subscribe(
-      (macAddress) => {
-        if (macAddress && macAddress !== this.currentMacAddress) {
-          console.log('Nueva dirección MAC recibida:', macAddress);
-          this.currentMacAddress = macAddress;
-          this.reconnectWithNewMac();
-        }
-      }
-    );
-  }
-
-  private reconnectWithNewMac() {
-    console.log(
-      'Reconectando WebSocket con nueva MAC:',
-      this.currentMacAddress
-    );
-
-    // Cerrar conexión actual si existe
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.close();
-    }
-
-    // Reiniciar contadores de reconexión
-    this.reconnectAttempts = 0;
-
-    // Configurar WebSocket con nueva MAC
-    this.setupWebSocket();
-  }
-
-  setChart(chart: 'main' | 'power' | 'energy') {
-    this.selectedChart = chart;
-  }
-
-  async refreshMacAddress() {
-    try {
-      console.log('🔄 Obteniendo dirección MAC del dispositivo...');
-      const macAddress = await this.bluetoothService.getMacAddress();
-      if (macAddress) {
-        console.log('✅ MAC obtenida exitosamente:', macAddress);
-        // La suscripción automáticamente actualizará currentMacAddress y reconectará
-      } else {
-        console.warn('⚠️ No se pudo obtener la dirección MAC');
-      }
-    } catch (error) {
-      console.error('❌ Error al obtener MAC:', error);
-    }
-  }
-
-  // Método para conectar manualmente si tenemos MAC válida
-  connectWithCurrentMac() {
-    if (this.isValidMac(this.currentMacAddress)) {
-      console.log('🔌 Conectando manualmente con MAC:', this.currentMacAddress);
-      this.setupWebSocket();
+    if (this.isAuthenticated()) {
+      this.loadUserDevices();
     } else {
-      console.warn('⚠️ No se puede conectar sin una MAC válida');
+      console.log('❌ Usuario no autenticado, mostrando mensaje');
     }
   }
 
-  getCurrentMac(): string {
-    return this.currentMacAddress;
+  ngOnDestroy(): void {
+    console.log('🛑 MonitoringComponent: ngOnDestroy - Limpiando recursos');
+    this.disconnectWebSocket();
   }
 
-  getWebSocketStatus(): string {
-    if (!this.ws) return 'No conectado';
-
-    switch (this.ws.readyState) {
-      case WebSocket.CONNECTING:
-        return 'Conectando...';
-      case WebSocket.OPEN:
-        return 'Conectado';
-      case WebSocket.CLOSING:
-        return 'Cerrando...';
-      case WebSocket.CLOSED:
-        return 'Desconectado';
-      default:
-        return 'Desconocido';
-    }
+  // Métodos de autenticación
+  isAuthenticated(): boolean {
+    return this.authService.isLoggedIn();
   }
 
-  isWebSocketConnected(): boolean {
-    return this.ws?.readyState === WebSocket.OPEN;
+  goToLogin(): void {
+    this.router.navigate(['/auth/login']);
   }
 
-  private isValidMac(mac: string): boolean {
-    // Verificar si la MAC tiene un formato válido (XX:XX:XX:XX:XX:XX)
-    const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
-    return macRegex.test(mac);
-  }
+  // Métodos de carga de dispositivos
+  async loadUserDevices(): Promise<void> {
+    console.log('📱 Cargando dispositivos del usuario...');
+    this.isLoading = true;
+    this.hasError = false;
+    this.errorMessage = '';
 
-  private setupWebSocket() {
     try {
-      // Verificar si tenemos una MAC válida
-      if (!this.isValidMac(this.currentMacAddress)) {
-        console.warn(
-          '⚠️ No hay MAC válida disponible. MAC actual:',
-          this.currentMacAddress
-        );
-        console.log(
-          '💡 Intenta conectarte al ESP32 desde la configuración Bluetooth para obtener la MAC'
-        );
-        return;
+      const devices = await this.deviceService.getMyDevices().toPromise();
+      console.log('✅ Dispositivos cargados:', devices);
+      this.userDevices = devices || [];
+
+      if (this.userDevices.length === 0) {
+        console.log('ℹ️ No se encontraron dispositivos registrados');
+      }
+    } catch (error: any) {
+      console.error('❌ Error cargando dispositivos:', error);
+      this.hasError = true;
+
+      if (error.status === 401) {
+        this.errorMessage =
+          'Sesión expirada. Por favor, inicia sesión nuevamente.';
+        this.authService.logout();
+        this.router.navigate(['/auth/login']);
+      } else {
+        this.errorMessage =
+          error.error?.message || 'Error al cargar dispositivos';
+      }
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // Métodos de selección de dispositivos
+  selectDevice(device: Device): void {
+    console.log('🎯 Dispositivo seleccionado:', device);
+    this.selectedDevice = device;
+    this.currentView = 'monitoring';
+    this.resetMonitoringData();
+    this.setupWebSocket();
+  }
+
+  backToDeviceSelection(): void {
+    console.log('⬅️ Regresando a selección de dispositivos');
+    this.currentView = 'device-selection';
+    this.disconnectWebSocket();
+    this.selectedDevice = null;
+    this.resetMonitoringData();
+  }
+
+  // Métodos WebSocket
+  setupWebSocket(): void {
+    if (!this.selectedDevice) {
+      console.error('❌ No hay dispositivo seleccionado para WebSocket');
+      return;
+    }
+
+    console.log(
+      '🔌 Configurando WebSocket para dispositivo:',
+      this.selectedDevice.name
+    );
+    this.disconnectWebSocket(); // Desconectar WebSocket anterior si existe
+
+    try {
+      const deviceMac = this.selectedDevice.mac_address;
+      const deviceType = this.selectedDevice.device_type_id;
+
+      // Determinar el topic basado en el tipo de dispositivo
+      let topic = '';
+      switch (deviceType) {
+        case 1: // NODO_CONTROL_PZEM
+          topic = 'pzem';
+          break;
+        case 2: // NODO_CONTROL_IR
+          topic = 'ir';
+          break;
+        case 3: // NODO_SENSADO_RPI
+          topic = 'rpi';
+          break;
+        default:
+          topic = 'general';
       }
 
-      // Cerrar conexión existente si existe
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.ws.close();
-      }
+      const wsUrl = `wss://websocketvoltio.acstree.xyz/ws?topic=${topic}&mac=${deviceMac}`;
+      console.log('🔗 Conectando WebSocket:', wsUrl);
 
-      // Construir URL con la MAC actual
-      const fullWsUrl = `${this.wsUrl}${this.currentMacAddress}`;
-      console.log('🔌 Conectando a WebSocket con MAC:', this.currentMacAddress);
-      console.log('🌐 URL completa:', fullWsUrl);
+      this.webSocket = new WebSocket(wsUrl);
 
-      this.ws = new WebSocket(fullWsUrl);
-
-      this.ws.onopen = (event) => {
+      this.webSocket.onopen = () => {
         console.log('✅ WebSocket conectado exitosamente');
-        this.reconnectAttempts = 0; // Reset counter on successful connection
+        this.isWebSocketConnected = true;
       };
 
-      this.ws.onmessage = (event) => {
+      this.webSocket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          const message = JSON.parse(data.content);
-          const payload = JSON.parse(message.message).payload;
-
-          this.updateChartData(payload);
-          console.log('Payload recibido:', payload);
+          console.log('📊 Datos recibidos del WebSocket:', data);
+          this.processWebSocketData(data);
         } catch (error) {
-          console.error('Error al parsear mensaje WebSocket:', error);
+          console.error('❌ Error procesando datos del WebSocket:', error);
         }
       };
 
-      this.ws.onerror = (error) => {
-        console.error('❌ Error en WebSocket:', error);
-      };
+      this.webSocket.onclose = (event) => {
+        console.log('🔌 WebSocket desconectado:', event.code, event.reason);
+        this.isWebSocketConnected = false;
 
-      this.ws.onclose = (event) => {
-        console.log(
-          '🔌 WebSocket desconectado. Código:',
-          event.code,
-          'Razón:',
-          event.reason
-        );
-
-        // Intentar reconectar si no fue un cierre intencional
-        if (
-          event.code !== 1000 &&
-          this.reconnectAttempts < this.maxReconnectAttempts
-        ) {
-          this.reconnectAttempts++;
-          console.log(
-            `🔄 Intentando reconectar... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
-          );
-
+        // Reconectar automáticamente después de 5 segundos si no fue intencional
+        if (event.code !== 1000 && this.selectedDevice) {
+          console.log('🔄 Reconectando WebSocket en 5 segundos...');
           setTimeout(() => {
-            this.setupWebSocket();
-          }, this.reconnectInterval);
-        } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-          console.error('❌ Máximo número de intentos de reconexión alcanzado');
+            if (this.selectedDevice && !this.isWebSocketConnected) {
+              this.setupWebSocket();
+            }
+          }, 5000);
         }
+      };
+
+      this.webSocket.onerror = (error) => {
+        console.error('❌ Error en WebSocket:', error);
+        this.isWebSocketConnected = false;
       };
     } catch (error) {
-      console.error('❌ Error al configurar WebSocket:', error);
+      console.error('❌ Error configurando WebSocket:', error);
+      this.isWebSocketConnected = false;
     }
   }
 
-  private updateChartData(payload: any) {
-    const time = new Date().toLocaleTimeString();
+  disconnectWebSocket(): void {
+    if (this.webSocket) {
+      console.log('🔌 Desconectando WebSocket...');
+      this.webSocket.close(1000, 'Desconexión intencional');
+      this.webSocket = null;
+      this.isWebSocketConnected = false;
+    }
+  }
 
-    this.timeData.push(time);
-    this.voltageData.push(payload.voltage / 10);
-    this.currentData.push(payload.current / 1000);
-    this.powerData.push(payload.power / 10);
-    this.energyData.push(payload.energy);
+  reconnectWebSocket(): void {
+    console.log('🔄 Reconectando WebSocket...');
+    this.setupWebSocket();
+  }
 
-    if (this.timeData.length > 60) {
+  // Procesamiento de datos del WebSocket
+  processWebSocketData(data: any): void {
+    const now = new Date().toLocaleTimeString();
+
+    // Mantener solo los últimos 50 puntos de datos
+    if (this.timeData.length >= 50) {
       this.timeData.shift();
       this.voltageData.shift();
       this.currentData.shift();
       this.powerData.shift();
       this.energyData.shift();
+      this.frequencyData.shift();
+      this.powerFactorData.shift();
     }
 
-    this.updateCharts();
+    this.timeData.push(now);
+
+    // Procesar datos según el tipo de dispositivo
+    if (this.selectedDevice?.device_type_id === 1) {
+      this.voltageData.push(data.voltage || 0);
+      this.currentData.push(data.current || 0);
+      this.powerData.push(data.power || 0);
+      this.energyData.push(data.energy || 0);
+      this.frequencyData.push(data.frequency || 0);
+      this.powerFactorData.push(data.powerFactor || 0);
+    }
+    // TODO: Agregar procesamiento para otros tipos de dispositivos
+
+    this.updateChartData();
   }
 
-  private initCharts() {
+  // Métodos de gráficas
+  initializeChartOptions(): void {
     this.chartOption = {
       title: {
         text: 'Voltaje y Corriente en Tiempo Real',
@@ -260,15 +274,14 @@ export class MonitoringComponent implements OnInit, OnDestroy {
       },
       tooltip: {
         trigger: 'axis',
-        axisPointer: { type: 'cross' },
       },
       legend: {
         data: ['Voltaje (V)', 'Corriente (A)'],
-        bottom: 0,
+        top: 30,
       },
       xAxis: {
         type: 'category',
-        data: [],
+        data: this.timeData,
       },
       yAxis: [
         {
@@ -286,19 +299,16 @@ export class MonitoringComponent implements OnInit, OnDestroy {
         {
           name: 'Voltaje (V)',
           type: 'line',
-          data: [],
+          data: this.voltageData,
           smooth: true,
-          lineStyle: { width: 2 },
-          itemStyle: { color: '#FF4560' },
+          yAxisIndex: 0,
         },
         {
           name: 'Corriente (A)',
           type: 'line',
-          yAxisIndex: 1,
-          data: [],
+          data: this.currentData,
           smooth: true,
-          lineStyle: { width: 2 },
-          itemStyle: { color: '#00E396' },
+          yAxisIndex: 1,
         },
       ],
     };
@@ -313,7 +323,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
       },
       xAxis: {
         type: 'category',
-        data: [],
+        data: this.timeData,
       },
       yAxis: {
         type: 'value',
@@ -321,18 +331,18 @@ export class MonitoringComponent implements OnInit, OnDestroy {
       },
       series: [
         {
+          name: 'Potencia (W)',
           type: 'line',
-          data: [],
-          areaStyle: {},
+          data: this.powerData,
           smooth: true,
-          itemStyle: { color: '#008FFB' },
+          areaStyle: {},
         },
       ],
     };
 
     this.energyChartOption = {
       title: {
-        text: 'Consumo de Energía',
+        text: 'Energía Acumulada',
         left: 'center',
       },
       tooltip: {
@@ -340,7 +350,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
       },
       xAxis: {
         type: 'category',
-        data: [],
+        data: this.timeData,
       },
       yAxis: {
         type: 'value',
@@ -348,38 +358,38 @@ export class MonitoringComponent implements OnInit, OnDestroy {
       },
       series: [
         {
-          type: 'bar',
-          data: [],
-          itemStyle: { color: '#FEB019' },
+          name: 'Energía (kWh)',
+          type: 'line',
+          data: this.energyData,
+          smooth: true,
+          step: 'end',
         },
       ],
     };
   }
 
-  private updateCharts() {
+  updateChartData(): void {
+    // Actualizar datos en las opciones de gráficas
     this.chartOption = {
       ...this.chartOption,
       xAxis: {
         type: 'category',
-        data: [...this.timeData],
+        data: this.timeData,
       },
       series: [
         {
           name: 'Voltaje (V)',
           type: 'line',
-          data: [...this.voltageData],
+          data: this.voltageData,
           smooth: true,
-          lineStyle: { width: 2 },
-          itemStyle: { color: '#FF4560' },
+          yAxisIndex: 0,
         },
         {
           name: 'Corriente (A)',
           type: 'line',
-          yAxisIndex: 1,
-          data: [...this.currentData],
+          data: this.currentData,
           smooth: true,
-          lineStyle: { width: 2 },
-          itemStyle: { color: '#00E396' },
+          yAxisIndex: 1,
         },
       ],
     };
@@ -388,15 +398,15 @@ export class MonitoringComponent implements OnInit, OnDestroy {
       ...this.powerChartOption,
       xAxis: {
         type: 'category',
-        data: [...this.timeData],
+        data: this.timeData,
       },
       series: [
         {
+          name: 'Potencia (W)',
           type: 'line',
-          data: [...this.powerData],
-          areaStyle: {},
+          data: this.powerData,
           smooth: true,
-          itemStyle: { color: '#008FFB' },
+          areaStyle: {},
         },
       ],
     };
@@ -405,15 +415,52 @@ export class MonitoringComponent implements OnInit, OnDestroy {
       ...this.energyChartOption,
       xAxis: {
         type: 'category',
-        data: [...this.timeData],
+        data: this.timeData,
       },
       series: [
         {
-          type: 'bar',
-          data: [...this.energyData],
-          itemStyle: { color: '#FEB019' },
+          name: 'Energía (kWh)',
+          type: 'line',
+          data: this.energyData,
+          smooth: true,
+          step: 'end',
         },
       ],
     };
+  }
+
+  setChart(chartType: 'main' | 'power' | 'energy'): void {
+    console.log('📊 Cambiando a gráfica:', chartType);
+    this.selectedChart = chartType;
+  }
+
+  // Métodos utilitarios
+  resetMonitoringData(): void {
+    this.timeData = [];
+    this.voltageData = [];
+    this.currentData = [];
+    this.powerData = [];
+    this.energyData = [];
+    this.frequencyData = [];
+    this.powerFactorData = [];
+    this.selectedChart = 'main';
+    this.updateChartData();
+  }
+
+  getDeviceIcon(deviceTypeId: number): string {
+    switch (deviceTypeId) {
+      case 1: // NODO_CONTROL_PZEM
+        return '⚡';
+      case 2: // NODO_CONTROL_IR
+        return '🌡️';
+      case 3: // NODO_SENSADO_RPI
+        return '🔬';
+      default:
+        return '📱';
+    }
+  }
+
+  getDeviceVariables(deviceTypeId: number): string[] {
+    return this.deviceVariables[deviceTypeId] || [];
   }
 }
