@@ -177,6 +177,16 @@
           </h3>
           <p class="text-red-600 mb-4">{{ errorMessage }}</p>
 
+          <!-- Botón específico para cuando no hay dispositivos PZEM -->
+          <div *ngIf="noPzemDevices" class="text-center mt-4">
+            <button
+              (click)="goToDevices()"
+              class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Registrar Dispositivo PZEM
+            </button>
+          </div>
+
           <!-- Si es error de sesión expirada, mostrar botón de login -->
           <div *ngIf="errorMessage.includes('sesión ha expirado')">
             <button

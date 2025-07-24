@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, map, switchMap, throwError, of } from 'rxjs';
 import { AuthService } from '../../auth/services/auth.service';
+import { DeviceService, Device } from '../../devices/services/device.service';
 
 export interface EnergyData {
   _time: string;
@@ -44,11 +45,83 @@ export interface StatisticalSummary {
 export class HistorialService {
   private baseUrl = 'https://voltioapi.acstree.xyz/api/v1';
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+    private deviceService: DeviceService
+  ) {}
+
+  // Obtener dispositivos PZEM del usuario
+  getUserPzemDevices(): Observable<Device[]> {
+    console.log('📱 Obteniendo dispositivos PZEM del usuario...');
+
+    return this.deviceService.getMyDevices().pipe(
+      map((devices) => {
+        console.log('📱 Todos los dispositivos del usuario:', devices);
+
+        // Filtrar solo dispositivos tipo PZEM (device_type_id === 1)
+        const pzemDevices = devices.filter(
+          (device) => device.device_type_id === 1
+        );
+        console.log('⚡ Dispositivos PZEM encontrados:', pzemDevices);
+
+        return pzemDevices;
+      })
+    );
+  }
+
+  // Obtener MAC addresses de dispositivos PZEM
+  getPzemMacAddresses(): Observable<string[]> {
+    return this.getUserPzemDevices().pipe(
+      map((pzemDevices) => {
+        const macAddresses = pzemDevices.map((device) => device.mac_address);
+        console.log('🔗 MAC addresses de dispositivos PZEM:', macAddresses);
+        return macAddresses;
+      })
+    );
+  }
 
   getEnergyHistory(
-    mac: string = 'CC:DB:A7:2F:AE:B0',
+    mac?: string,
     period: string = '1d'
+  ): Observable<EnergyData[]> {
+    console.log('🚀 Iniciando getEnergyHistory...');
+
+    // Si se proporciona una MAC específica, usarla
+    if (mac) {
+      console.log('📍 Usando MAC específica proporcionada:', mac);
+      return this.getEnergyHistoryForMac(mac, period);
+    }
+
+    // Si no se proporciona MAC, obtener la primera MAC de dispositivos PZEM del usuario
+    console.log(
+      '🔍 No se proporcionó MAC, obteniendo dispositivos PZEM del usuario...'
+    );
+
+    return this.getPzemMacAddresses().pipe(
+      switchMap((macAddresses) => {
+        if (macAddresses.length === 0) {
+          console.log('⚠️ No se encontraron dispositivos PZEM para el usuario');
+          return throwError(
+            () =>
+              new Error(
+                'No tienes dispositivos PZEM registrados. Por favor registra un dispositivo PZEM primero.'
+              )
+          );
+        }
+
+        // Usar la primera MAC encontrada
+        const firstMac = macAddresses[0];
+        console.log('✅ Usando primera MAC de dispositivo PZEM:', firstMac);
+
+        return this.getEnergyHistoryForMac(firstMac, period);
+      })
+    );
+  }
+
+  private getEnergyHistoryForMac(
+    mac: string,
+    period: string
   ): Observable<EnergyData[]> {
     const headers = this.getAuthHeaders();
 
