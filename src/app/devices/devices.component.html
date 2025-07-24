@@ -1,43 +1,84 @@
-<div class="flex flex-col md:flex-row gap-8 justify-center items-start w-full p-4">
+<div
+  class="flex flex-col md:flex-row gap-8 justify-center items-start w-full p-4"
+>
   <!-- Lista de dispositivos -->
   <div class="w-full md:w-1/3">
     <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
       <h2 class="text-xl font-bold mb-4 text-gray-800">Mis Dispositivos</h2>
-      <button (click)="showAddOptions = !showAddOptions" class="w-full py-2 px-4 mb-4 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition">Añadir Nuevo Dispositivo</button>
+      <button
+        (click)="showAddOptions = !showAddOptions"
+        class="w-full py-2 px-4 mb-4 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition"
+      >
+        Añadir Nuevo Dispositivo
+      </button>
       <div *ngIf="showAddOptions" class="flex flex-col gap-2 mb-4">
-        <button (click)="addMode = 'bluetooth'" class="w-full py-2 px-4 rounded-lg border border-green-500 text-green-600 font-semibold hover:bg-green-50">Vincular por Bluetooth</button>
-        <button (click)="addMode = 'manual'" class="w-full py-2 px-4 rounded-lg border border-gray-400 text-gray-700 font-semibold hover:bg-gray-50">Añadir Manualmente</button>
+        <button
+          (click)="addMode = 'bluetooth'"
+          class="w-full py-2 px-4 rounded-lg border border-green-500 text-green-600 font-semibold hover:bg-green-50"
+        >
+          Vincular por Bluetooth
+        </button>
+        <button
+          (click)="addMode = 'manual'"
+          class="w-full py-2 px-4 rounded-lg border border-gray-400 text-gray-700 font-semibold hover:bg-gray-50"
+        >
+          Añadir Manualmente
+        </button>
       </div>
       <div *ngIf="loading" class="text-gray-500">Cargando...</div>
-      <div *ngIf="error" class="text-red-500 font-semibold mb-2">{{ error }}</div>
+      <div *ngIf="error" class="text-red-500 font-semibold mb-2">
+        {{ error }}
+      </div>
       <ul *ngIf="devices.length" class="space-y-3">
-        <li *ngFor="let device of devices" class="bg-gray-50 rounded-lg p-3 flex flex-col border border-gray-200 relative">
+        <li
+          *ngFor="let device of devices"
+          class="bg-gray-50 rounded-lg p-3 flex flex-col border border-gray-200 relative"
+        >
           <div class="flex items-center gap-2 mb-1">
-            <span class="inline-block w-3 h-3 rounded-full"
+            <span
+              class="inline-block w-3 h-3 rounded-full"
               [ngClass]="device.is_active ? 'bg-green-500' : 'bg-red-500'"
               [title]="device.is_active ? 'Activo' : 'Inactivo'"
             ></span>
-            <span class="font-semibold text-gray-800 text-base">{{ device.name }}</span>
+            <span class="font-semibold text-gray-800 text-base">{{
+              device.name
+            }}</span>
           </div>
-          <span class="text-xs text-gray-500 mb-1">{{ device.mac_address }}</span>
-          <span class="text-xs text-green-600 mb-1">{{ device.device_type_name }}</span>
-          <span *ngIf="device.description" class="text-xs text-gray-700 italic">{{ device.description }}</span>
+          <span class="text-xs text-gray-500 mb-1">{{
+            device.mac_address
+          }}</span>
+          <span class="text-xs text-green-600 mb-1">{{
+            device.device_type_name
+          }}</span>
+          <span
+            *ngIf="device.description"
+            class="text-xs text-gray-700 italic"
+            >{{ device.description }}</span
+          >
         </li>
       </ul>
-      <div *ngIf="!devices.length && !loading" class="text-gray-400 mt-2">No tienes dispositivos registrados.</div>
+      <div *ngIf="!devices.length && !loading" class="text-gray-400 mt-2">
+        No tienes dispositivos registrados.
+      </div>
     </div>
   </div>
   <!-- Formulario de vinculación -->
   <div class="w-full md:w-2/3">
     <div class="bg-white rounded-xl shadow-lg p-6">
       <ng-container *ngIf="addMode === 'bluetooth'">
-        <app-bluetooth-register (registered)="onDeviceRegistered()"></app-bluetooth-register>
+        <app-bluetooth-register
+          (registered)="onDeviceRegistered()"
+        ></app-bluetooth-register>
       </ng-container>
       <ng-container *ngIf="addMode === 'manual'">
-        <app-manual-register (registered)="onDeviceRegistered()"></app-manual-register>
+        <app-manual-register
+          (registered)="onDeviceRegistered()"
+        ></app-manual-register>
       </ng-container>
       <ng-container *ngIf="!addMode">
-        <div class="text-gray-400 text-center">Selecciona una opción para vincular o registrar un dispositivo.</div>
+        <div class="text-gray-400 text-center">
+          Selecciona una opción para vincular o registrar un dispositivo.
+        </div>
       </ng-container>
     </div>
   </div>
