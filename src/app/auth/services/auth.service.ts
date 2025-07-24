@@ -17,7 +17,8 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   message: string;
-  token: string;
+  access_token: string;
+  token_type: string;
   user_id: number;
   user: {
     id: number;
@@ -35,17 +36,11 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(
-      `${this.apiUrl}/users/login`,
-      credentials
-    );
+    return this.http.post<AuthResponse>(`${this.apiUrl}/users/login`, credentials);
   }
 
   register(userData: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(
-      `${this.apiUrl}/users/register`,
-      userData
-    );
+    return this.http.post<AuthResponse>(`${this.apiUrl}/users/register`, userData);
   }
 
   logout(): void {
@@ -55,20 +50,34 @@ export class AuthService {
   }
 
   saveToken(token: string): void {
-    localStorage.setItem('token', token);
+    if (token && token !== 'undefined' && token !== 'null') {
+      localStorage.setItem('token', token);
+    } else {
+      localStorage.removeItem('token');
+    }
   }
 
   getToken(): string | null {
-    return localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    return token && token !== 'undefined' && token !== 'null' ? token : null;
   }
 
   saveUser(user: any): void {
-    localStorage.setItem('user', JSON.stringify(user));
+    if (user !== undefined && user !== null) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
   }
 
   getUser(): any {
     const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    if (!user || user === 'undefined') return null;
+    try {
+      return JSON.parse(user);
+    } catch {
+      return null;
+    }
   }
 
   saveUserId(userId: number): void {
@@ -84,7 +93,6 @@ export class AuthService {
     return !!this.getToken();
   }
 
-  // Método helper para obtener toda la información del usuario autenticado
   getCurrentUserData() {
     return {
       token: this.getToken(),

@@ -1,0 +1,86 @@
+/* Estilos específicos para el componente de historial */
+
+.container {
+  max-width: 1200px;
+}
+
+/* Animaciones para los botones de tipo de gráfica */
+.graph-type-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.graph-type-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.graph-type-button.active {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para el área de la gráfica */
+.chart-container {
+  position: relative;
+  min-height: 400px;
+}
+
+/* Animación de carga */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Estilos para las tarjetas de información */
+.info-card {
+  transition: transform 0.2s ease-in-out;
+}
+
+.info-card:hover {
+  transform: translateY(-1px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-cols-3 {
+    grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+/* Estilos para el estado vacío */
+.empty-state {
+  color: #6b7280;
+  text-align: center;
+}
+
+/* Estilos para el botón de actualizar */
+.refresh-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.refresh-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

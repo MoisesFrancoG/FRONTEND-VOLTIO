@@ -41,7 +41,7 @@ export class LoginComponent implements OnInit {
           console.log('Login exitoso:', response);
 
           // Guardar token, datos del usuario y user_id
-          this.authService.saveToken(response.token);
+          this.authService.saveToken(response.access_token);
           this.authService.saveUser(response.user);
           this.authService.saveUserId(response.user_id);
 
