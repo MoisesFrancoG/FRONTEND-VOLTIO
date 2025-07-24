@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit } from '@angular/core';
 import { DeviceService } from '../services/device.service';
 
 const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
@@ -13,9 +13,14 @@ const IR_RECORD_CHAR_UUID = 'f2f3f4f5-f6f7-f8f9-fafb-fcfdfeff0001';
   templateUrl: './bluetooth-register.component.html',
   styleUrls: ['./bluetooth-register.component.css'],
 })
-export class BluetoothRegisterComponent {
+export class BluetoothRegisterComponent implements OnInit {
+  devices: any[] = [];
   @Output() registered = new EventEmitter<void>();
   step: 'idle' | 'connecting' | 'form' | 'saving' | 'done' = 'idle';
+  
+  get isAlreadyRegistered(): boolean {
+    return this.devices.some(d => d.mac_address === this.mac);
+  }
   error: string | null = null;
   deviceName = '';
   mac = '';
@@ -29,7 +34,14 @@ export class BluetoothRegisterComponent {
   server: any;
   service: any;
 
+
   constructor(private deviceService: DeviceService) {}
+
+  ngOnInit() {
+    this.deviceService.getMyDevices().subscribe(devices => {
+      this.devices = devices;
+    });
+  }
 
   async startBluetooth() {
     this.error = null;
@@ -83,7 +95,10 @@ export class BluetoothRegisterComponent {
       await ssidChar.writeValue(encoder.encode(this.ssid));
       await passChar.writeValue(encoder.encode(this.password));
       await saveChar.writeValue(encoder.encode('SAVE'));
-      await this.registerDevice();
+      const exists = this.devices.some(d => d.mac_address === this.mac);
+      if (!exists) {
+        await this.registerDevice();
+      }
       this.step = 'done';
       this.registered.emit();
     } catch {

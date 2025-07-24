@@ -25,6 +25,7 @@ export class ManualRegisterComponent {
         ],
       ],
       description: [''],
+      is_active: [true],
     });
   }
 
@@ -36,7 +37,6 @@ export class ManualRegisterComponent {
     const data = {
       ...this.form.value,
       device_type_id: 2,
-      is_active: true,
     };
     this.deviceService.registerDevice(data).subscribe({
       next: () => {

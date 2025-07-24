@@ -14,6 +14,8 @@ export class DeviceService {
   }
 
   registerDevice(data: any): Observable<any> {
+    console.log(this.baseUrl + '/', data);
+
     return this.http.post<any>(this.baseUrl, data);
   }
 }
