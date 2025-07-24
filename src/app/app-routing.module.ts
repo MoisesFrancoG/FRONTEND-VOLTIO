@@ -23,6 +23,12 @@ const routes: Routes = [
       import('./bluetooth/bluetooth.module').then((m) => m.BluetoothModule),
     canActivate: [AuthGuard],
   },
+  {
+    path: 'devices',
+    loadChildren: () =>
+      import('./devices/devices.module').then((m) => m.DevicesModule),
+    canActivate: [AuthGuard],
+  },
 ];
 
 @NgModule({
