@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgxEchartsModule } from 'ngx-echarts';
 import { MonitoringComponent } from './monitoring.component';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { AuthService } from '../../auth/services/auth.service';
 
 describe('MonitoringComponent', () => {
   let component: MonitoringComponent;
@@ -10,10 +12,12 @@ describe('MonitoringComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [MonitoringComponent],
       imports: [
+        HttpClientTestingModule,
         NgxEchartsModule.forRoot({
           echarts: () => import('echarts'),
         }),
       ],
+      providers: [AuthService],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MonitoringComponent);
