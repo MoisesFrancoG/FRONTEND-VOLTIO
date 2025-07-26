@@ -42,7 +42,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   // Variables por tipo de dispositivo
   deviceVariables: { [key: number]: string[] } = {
     1: [
-      // NODO_CONTROL_PZEM
+     
       'voltage',
       'current',
       'power',
@@ -238,6 +238,21 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   processWebSocketData(data: any): void {
     const now = new Date().toLocaleTimeString();
 
+    const contentObj = JSON.parse(data.content); // Primer parseo
+const messageObj = JSON.parse(contentObj.message); // Segundo parseo
+const payload = messageObj.payload;
+
+    // Procesar datos según el tipo de dispositivo
+    if (this.selectedDevice?.device_type_id === 1) {
+      this.voltageData.push(payload.voltage || 0);
+      this.currentData.push(payload.current || 0);
+      this.powerData.push(payload.power || 0);
+      this.energyData.push(payload.energy || 0);
+      this.frequencyData.push(payload.frequency || 0);
+      this.powerFactorData.push(payload.powerFactor || 0);
+    }
+    // TODO: Agregar procesamiento para otros tipos de dispositivos
+
     // Mantener solo los últimos 50 puntos de datos
     if (this.timeData.length >= 50) {
       this.timeData.shift();
@@ -251,14 +266,16 @@ export class MonitoringComponent implements OnInit, OnDestroy {
 
     this.timeData.push(now);
 
+    
+
     // Procesar datos según el tipo de dispositivo
     if (this.selectedDevice?.device_type_id === 1) {
-      this.voltageData.push(data.voltage || 0);
-      this.currentData.push(data.current || 0);
-      this.powerData.push(data.power || 0);
-      this.energyData.push(data.energy || 0);
-      this.frequencyData.push(data.frequency || 0);
-      this.powerFactorData.push(data.powerFactor || 0);
+      this.voltageData.push(payload.voltage || 0);
+      this.currentData.push(payload.current || 0);
+      this.powerData.push(payload.power || 0);
+      this.energyData.push(payload.energy || 0);
+      this.frequencyData.push(payload.frequency || 0);
+      this.powerFactorData.push(payload.powerFactor || 0);
     }
     // TODO: Agregar procesamiento para otros tipos de dispositivos
 
