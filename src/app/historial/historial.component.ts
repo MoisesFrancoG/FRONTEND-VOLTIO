@@ -256,6 +256,11 @@ export class HistorialComponent implements OnInit {
     this.router.navigate(['/devices']);
   }
 
+  // Método para redireccionar al análisis de sensores
+  goToSensorAnalysis(): void {
+    this.router.navigate(['/historial/sensor-history']);
+  }
+
   // Método para cambiar el tipo de gráfica
   onGraphTypeChange(type: string): void {
     this.selectedGraphType = type;

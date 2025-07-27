@@ -1,0 +1,765 @@
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">
+        🔬 Análisis Histórico de Sensores
+      </h1>
+      <p class="text-gray-600">
+        Visualiza datos históricos de temperatura, luz y movimiento
+      </p>
+    </div>
+
+    <!-- Información de autenticación -->
+    <div class="flex items-center gap-3">
+      <div *ngIf="isAuthenticated()" class="flex items-center gap-2 text-sm">
+        <span
+          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+        >
+          🔐 Autenticado
+        </span>
+        <span class="text-gray-600">
+          {{
+            getCurrentUser().user?.email ||
+              getCurrentUser().user?.name ||
+              "Usuario"
+          }}
+        </span>
+      </div>
+
+      <div *ngIf="!isAuthenticated()" class="flex items-center gap-2 text-sm">
+        <span
+          class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+        >
+          🔒 No autenticado
+        </span>
+        <button
+          (click)="goToLogin()"
+          class="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Iniciar Sesión
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navegación entre tipos de análisis -->
+  <div class="mb-6">
+    <div class="bg-white rounded-lg shadow-lg p-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <button
+            (click)="goToEnergyAnalysis()"
+            class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          >
+            <span>←</span>
+            <span>⚡ Análisis Energético</span>
+          </button>
+
+          <div class="flex items-center gap-2">
+            <span class="text-gray-400">|</span>
+            <span
+              class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
+            >
+              🔬 Análisis de Sensores Actual
+            </span>
+          </div>
+        </div>
+
+        <div class="text-sm text-gray-600">
+          <span class="font-medium">Modo:</span> Sensores Ambientales IoT
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controles de selección -->
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+    <!-- Selector de dispositivo sensor -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        🔬 Dispositivo Sensor
+      </h3>
+
+      <select
+        [(ngModel)]="selectedDevice"
+        (change)="onDeviceChange()"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option [ngValue]="null">Selecciona un dispositivo</option>
+        <option *ngFor="let device of sensorDevices" [ngValue]="device">
+          {{ device.name }} ({{ device.mac_address }})
+        </option>
+      </select>
+
+      <small class="text-gray-500 text-xs mt-2 block">
+        Solo dispositivos tipo 2 (nodos de sensado)
+      </small>
+
+      <!-- Mensaje cuando no hay dispositivos sensores -->
+      <div
+        *ngIf="sensorDevices.length === 0 && !isLoading"
+        class="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200"
+      >
+        <div class="text-yellow-800 text-sm font-medium">
+          ⚠️ Sin dispositivos sensores
+        </div>
+        <div class="text-yellow-700 text-xs mt-1">
+          Necesitas dispositivos tipo 2 registrados.
+        </div>
+        <button
+          (click)="goToDevices()"
+          class="mt-2 px-3 py-1 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700 transition-colors"
+        >
+          Registrar Dispositivo
+        </button>
+      </div>
+    </div>
+
+    <!-- Selector de tipo de sensor -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        📡 Tipo de Sensor
+      </h3>
+
+      <div class="space-y-2">
+        <button
+          *ngFor="let type of sensorTypes"
+          (click)="selectedSensorType = $any(type.value); onSensorTypeChange()"
+          [class]="
+            'w-full p-3 rounded-lg border-2 transition-all duration-200 text-left ' +
+            (selectedSensorType === type.value
+              ? 'border-blue-500 bg-blue-50 text-blue-700'
+              : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50')
+          "
+          [disabled]="!selectedDevice"
+        >
+          <div class="font-semibold text-sm">{{ type.label }}</div>
+          <div class="text-xs opacity-75">{{ type.description }}</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Selector de período -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        📅 Período
+      </h3>
+
+      <div class="space-y-2">
+        <button
+          *ngFor="let period of periods"
+          (click)="selectedPeriod = $any(period.value); onPeriodChange()"
+          [class]="
+            'w-full p-3 rounded-lg border-2 transition-all duration-200 text-left ' +
+            (selectedPeriod === period.value
+              ? 'border-green-500 bg-green-50 text-green-700'
+              : 'border-gray-200 bg-white text-gray-700 hover:border-green-300 hover:bg-green-50')
+          "
+          [disabled]="!selectedDevice || !selectedSensorType"
+        >
+          <div class="flex items-center gap-2">
+            <span>{{ period.icon }}</span>
+            <div>
+              <div class="font-semibold text-sm">{{ period.label }}</div>
+              <div class="text-xs opacity-75">{{ period.description }}</div>
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Selector de tipo de análisis -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+        📊 Análisis
+      </h3>
+
+      <div class="space-y-2">
+        <button
+          *ngFor="let analysis of analysisTypes"
+          (click)="
+            selectedAnalysisType = $any(analysis.value); onAnalysisTypeChange()
+          "
+          [class]="
+            'w-full p-3 rounded-lg border-2 transition-all duration-200 text-left ' +
+            (selectedAnalysisType === analysis.value
+              ? 'border-purple-500 bg-purple-50 text-purple-700'
+              : 'border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50')
+          "
+        >
+          <div class="flex items-center gap-2">
+            <span>{{ analysis.icon }}</span>
+            <div>
+              <div class="font-semibold text-sm">{{ analysis.label }}</div>
+              <div class="text-xs opacity-75">{{ analysis.description }}</div>
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Selector de tipo de gráfica -->
+  <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">
+      📊 Tipo de Visualización
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      <button
+        *ngFor="let type of graphTypes"
+        (click)="onGraphTypeChange(type.value)"
+        [class]="
+          'p-3 rounded-lg border-2 transition-all duration-200 text-left ' +
+          (selectedChartType === type.value
+            ? 'border-green-500 bg-green-50 text-green-700'
+            : 'border-gray-200 bg-white text-gray-700 hover:border-green-300 hover:bg-green-50')
+        "
+        [disabled]="!selectedDevice || !selectedSensorType"
+      >
+        <div class="flex items-center gap-3">
+          <span class="text-xl">{{ type.icon }}</span>
+          <div>
+            <div class="font-semibold text-sm">{{ type.label }}</div>
+            <div class="text-xs opacity-75">{{ type.description }}</div>
+          </div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado de carga -->
+  <div
+    *ngIf="isLoading"
+    class="flex items-center justify-center h-64 bg-white rounded-lg shadow-lg"
+  >
+    <div class="text-center">
+      <div class="animate-spin text-4xl mb-4">⏳</div>
+      <p class="text-gray-600">Cargando datos históricos...</p>
+    </div>
+  </div>
+
+  <!-- Estado de error -->
+  <div
+    *ngIf="hasError && !isLoading"
+    class="flex items-center justify-center h-64 bg-white rounded-lg shadow-lg"
+  >
+    <div class="text-center bg-red-50 p-8 rounded-lg border border-red-200">
+      <div class="text-6xl mb-4">⚠️</div>
+      <h3 class="text-xl font-semibold text-red-800 mb-2">
+        Error al cargar datos
+      </h3>
+      <p class="text-red-600 mb-4">{{ errorMessage }}</p>
+
+      <!-- Botón específico para cuando no hay datos -->
+      <div *ngIf="errorMessage.includes('404')">
+        <p class="text-sm text-red-500 mb-3">
+          No se encontraron datos para el sensor seleccionado en el período
+          especificado.
+        </p>
+      </div>
+
+      <!-- Si es error de sesión expirada -->
+      <div *ngIf="errorMessage.includes('sesión ha expirado')">
+        <button
+          (click)="goToLogin()"
+          class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors mr-2"
+        >
+          Ir a Login
+        </button>
+      </div>
+
+      <!-- Para otros errores, mostrar botón de reintentar -->
+      <div *ngIf="!errorMessage.includes('sesión ha expirado')">
+        <button
+          (click)="refreshData()"
+          class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
+        >
+          Reintentar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Área principal de gráficas y estadísticas -->
+  <div
+    *ngIf="
+      !isLoading &&
+      !hasError &&
+      selectedDevice &&
+      selectedSensorType &&
+      getCurrentData().length > 0
+    "
+  >
+    <!-- Header de información -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2
+            class="text-xl font-semibold text-gray-800 flex items-center gap-2"
+          >
+            {{ getSensorTypeInfo().label }} - {{ getPeriodInfo().label }}
+          </h2>
+          <p class="text-sm text-gray-600 mt-1">
+            {{ getSensorTypeInfo().description }} |
+            {{ getPeriodInfo().description }}
+          </p>
+          <div class="mt-2 flex items-center gap-4 text-sm">
+            <span class="text-gray-600"
+              >Dispositivo: <strong>{{ selectedDevice.name }}</strong></span
+            >
+            <span class="text-gray-600"
+              >Registros: <strong>{{ getCurrentData().length }}</strong></span
+            >
+            <span class="text-gray-600"
+              >Unidad: <strong>{{ getDataUnit() }}</strong></span
+            >
+          </div>
+        </div>
+
+        <button
+          (click)="refreshData()"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
+          [disabled]="isLoading"
+        >
+          <span [class]="'inline-block ' + (isLoading ? 'animate-spin' : '')"
+            >🔄</span
+          >
+          {{ isLoading ? "Cargando..." : "Actualizar" }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Gráficas -->
+    <div
+      *ngIf="
+        selectedAnalysisType === 'chart' || selectedAnalysisType === 'both'
+      "
+      class="bg-white rounded-lg shadow-lg p-6 mb-6"
+    >
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">
+        📈 Visualización de Datos
+      </h3>
+
+      <!-- Boxplot (como información estadística) -->
+      <div
+        *ngIf="
+          !isLoading &&
+          !hasError &&
+          selectedChartType === 'boxplot' &&
+          boxplotData
+        "
+        class="h-96"
+      >
+        <div class="text-center py-8">
+          <h4 class="text-lg font-semibold mb-2">📊 Resumen Estadístico</h4>
+          <p class="text-sm text-gray-600 mb-6">
+            Análisis de distribución de datos - Cuartiles y valores extremos
+          </p>
+
+          <div class="grid grid-cols-5 gap-4 max-w-4xl mx-auto mb-6">
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div class="text-xs text-gray-500 mb-1">Valor Mínimo</div>
+              <div class="text-sm text-blue-600 font-medium mb-2">Mínimo</div>
+              <div class="text-lg font-bold text-blue-600">
+                {{ boxplotData.data[0][0] | number : "1.1-1" }}
+              </div>
+              <div class="text-xs text-blue-500 mt-1">
+                Valor más bajo registrado
+              </div>
+            </div>
+
+            <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div class="text-xs text-gray-500 mb-1">Primer Cuartil</div>
+              <div class="text-sm text-green-600 font-medium mb-2">
+                Q1 (25%)
+              </div>
+              <div class="text-lg font-bold text-green-600">
+                {{ boxplotData.data[0][1] | number : "1.1-1" }}
+              </div>
+              <div class="text-xs text-green-500 mt-1">
+                25% de datos están por debajo
+              </div>
+            </div>
+
+            <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <div class="text-xs text-gray-500 mb-1">Valor Central</div>
+              <div class="text-sm text-yellow-600 font-medium mb-2">
+                Mediana (50%)
+              </div>
+              <div class="text-lg font-bold text-yellow-600">
+                {{ boxplotData.data[0][2] | number : "1.1-1" }}
+              </div>
+              <div class="text-xs text-yellow-500 mt-1">
+                Valor que divide los datos a la mitad
+              </div>
+            </div>
+
+            <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
+              <div class="text-xs text-gray-500 mb-1">Tercer Cuartil</div>
+              <div class="text-sm text-orange-600 font-medium mb-2">
+                Q3 (75%)
+              </div>
+              <div class="text-lg font-bold text-orange-600">
+                {{ boxplotData.data[0][3] | number : "1.1-1" }}
+              </div>
+              <div class="text-xs text-orange-500 mt-1">
+                75% de datos están por debajo
+              </div>
+            </div>
+
+            <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+              <div class="text-xs text-gray-500 mb-1">Valor Máximo</div>
+              <div class="text-sm text-red-600 font-medium mb-2">Máximo</div>
+              <div class="text-lg font-bold text-red-600">
+                {{ boxplotData.data[0][4] | number : "1.1-1" }}
+              </div>
+              <div class="text-xs text-red-500 mt-1">
+                Valor más alto registrado
+              </div>
+            </div>
+          </div>
+
+          <!-- Explicación adicional -->
+          <div class="bg-gray-50 p-4 rounded-lg border max-w-3xl mx-auto">
+            <h5 class="text-sm font-semibold text-gray-700 mb-3">
+              📈 Interpretación de Cuartiles
+            </h5>
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-600"
+            >
+              <div class="flex items-start gap-2">
+                <span class="text-green-500 font-bold">Q1:</span>
+                <span
+                  >El 25% de las mediciones están por debajo de este valor.
+                  Representa el rango "bajo" de tus datos.</span
+                >
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="text-orange-500 font-bold">Q3:</span>
+                <span
+                  >El 75% de las mediciones están por debajo de este valor.
+                  Representa el límite del rango "alto".</span
+                >
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="text-blue-500 font-bold">Rango:</span>
+                <span
+                  >Entre Q1 y Q3 se encuentra el 50% central de tus datos (rango
+                  intercuartílico).</span
+                >
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="text-purple-500 font-bold">Uso:</span>
+                <span
+                  >Te ayuda a identificar patrones normales vs valores extremos
+                  en tus sensores.</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barras de Frecuencia -->
+      <div
+        *ngIf="
+          !isLoading &&
+          !hasError &&
+          selectedChartType === 'frequencyBars' &&
+          frequencyBarsData.length > 0
+        "
+        class="h-96"
+      >
+        <ngx-charts-bar-horizontal
+          [view]="[800, 400]"
+          [results]="frequencyBarsData"
+          [gradient]="false"
+          [xAxis]="true"
+          [yAxis]="true"
+          [legend]="false"
+          [showXAxisLabel]="true"
+          [showYAxisLabel]="true"
+          [xAxisLabel]="'Frecuencia'"
+          [yAxisLabel]="'Rangos'"
+          [animations]="true"
+          scheme="vivid"
+        >
+        </ngx-charts-bar-horizontal>
+      </div>
+
+      <!-- Gráfico de Pastel -->
+      <div
+        *ngIf="
+          !isLoading &&
+          !hasError &&
+          selectedChartType === 'pie' &&
+          pieData.length > 0
+        "
+        class="h-96"
+      >
+        <ngx-charts-pie-chart
+          [view]="[800, 400]"
+          [results]="pieData"
+          [gradient]="false"
+          [legend]="true"
+          [labels]="true"
+          [doughnut]="false"
+          [animations]="true"
+          scheme="vivid"
+        >
+        </ngx-charts-pie-chart>
+      </div>
+
+      <!-- Gráfica ECharts (fallback) -->
+      <div
+        *ngIf="!isLoading && !hasError && selectedChartType === 'echart'"
+        class="h-96"
+      >
+        <div echarts [options]="chartOption" class="h-full"></div>
+      </div>
+
+      <!-- Mensaje cuando no hay datos para mostrar -->
+      <div
+        *ngIf="
+          !isLoading &&
+          !hasError &&
+          ((selectedChartType === 'boxplot' && !boxplotData) ||
+            (selectedChartType === 'frequencyBars' &&
+              frequencyBarsData.length === 0) ||
+            (selectedChartType === 'pie' && pieData.length === 0))
+        "
+        class="text-center py-8 text-gray-500"
+      >
+        <div class="text-4xl mb-4">📊</div>
+        <p>No hay datos disponibles para mostrar el gráfico seleccionado</p>
+        <p class="text-sm mt-2">
+          Selecciona un dispositivo y tipo de sensor para cargar datos
+        </p>
+      </div>
+    </div>
+
+    <!-- Panel de estadísticas y probabilidades -->
+    <div
+      *ngIf="
+        selectedAnalysisType === 'statistics' || selectedAnalysisType === 'both'
+      "
+      class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"
+    >
+      <!-- Estadísticas Descriptivas -->
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <h3
+          class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"
+        >
+          📊 Estadísticas Descriptivas
+        </h3>
+
+        <div class="grid grid-cols-2 gap-4" *ngIf="statistics">
+          <div class="bg-blue-50 p-3 rounded-lg">
+            <div class="text-blue-800 font-semibold text-sm">Media</div>
+            <div class="text-blue-900 text-lg font-bold">
+              {{ statistics.mean | number : "1.2-3" }}
+              <span class="text-xs">{{ getDataUnit() }}</span>
+            </div>
+          </div>
+
+          <div class="bg-green-50 p-3 rounded-lg">
+            <div class="text-green-800 font-semibold text-sm">Mediana</div>
+            <div class="text-green-900 text-lg font-bold">
+              {{ statistics.median | number : "1.2-3" }}
+              <span class="text-xs">{{ getDataUnit() }}</span>
+            </div>
+          </div>
+
+          <div class="bg-purple-50 p-3 rounded-lg">
+            <div class="text-purple-800 font-semibold text-sm">Moda</div>
+            <div class="text-purple-900 text-lg font-bold">
+              {{
+                statistics.mode !== null
+                  ? (statistics.mode | number : "1.2-3") + " " + getDataUnit()
+                  : "N/A"
+              }}
+            </div>
+          </div>
+
+          <div class="bg-orange-50 p-3 rounded-lg">
+            <div class="text-orange-800 font-semibold text-sm">
+              Desv. Estándar
+            </div>
+            <div class="text-orange-900 text-lg font-bold">
+              {{ statistics.standardDeviation | number : "1.2-3" }}
+              <span class="text-xs">{{ getDataUnit() }}</span>
+            </div>
+          </div>
+
+          <div class="bg-red-50 p-3 rounded-lg">
+            <div class="text-red-800 font-semibold text-sm">Rango</div>
+            <div class="text-red-900 text-lg font-bold">
+              {{ statistics.range | number : "1.2-3" }}
+              <span class="text-xs">{{ getDataUnit() }}</span>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 p-3 rounded-lg">
+            <div class="text-gray-800 font-semibold text-sm">
+              Total Registros
+            </div>
+            <div class="text-gray-900 text-lg font-bold">
+              {{ statistics.count }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Análisis de Probabilidades -->
+      <div class="bg-white rounded-lg shadow-lg p-6">
+        <h3
+          class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"
+        >
+          🎯 Análisis de Probabilidades
+        </h3>
+
+        <div class="space-y-3">
+          <div
+            *ngFor="let prob of probabilities | keyvalue"
+            class="bg-gray-50 p-3 rounded-lg"
+          >
+            <div class="text-gray-800 font-semibold text-sm">
+              {{ prob.key }}
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+              <div class="text-gray-900 text-lg font-bold">
+                {{ prob.value * 100 | number : "1.1-1" }}%
+              </div>
+              <div class="flex-1 bg-gray-200 rounded-full h-2">
+                <div
+                  class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+                  [style.width.%]="prob.value * 100"
+                ></div>
+              </div>
+            </div>
+            <div class="text-xs text-gray-600 mt-1">
+              P(A) =
+              {{ prob.value * getCurrentData().length | number : "1.0-0" }} /
+              {{ getCurrentData().length }} =
+              {{ prob.value | number : "1.3-3" }}
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+          <div class="text-blue-800 font-semibold text-sm mb-2">
+            💡 Interpretación Probabilística
+          </div>
+          <div class="text-blue-700 text-xs">
+            Las probabilidades se calculan usando la fórmula clásica: P(A) =
+            casos favorables / casos posibles. Cada porcentaje representa la
+            frecuencia relativa de ocurrencia de ese evento en los datos
+            históricos del sensor.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Información adicional del dataset -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <h3
+        class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"
+      >
+        ℹ️ Información del Dataset
+      </h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-gray-50 p-3 rounded-lg">
+          <div class="text-gray-800 font-semibold text-sm">Sensor</div>
+          <div class="text-gray-900 text-sm flex items-center gap-2">
+            {{ getSensorTypeInfo().label }}
+          </div>
+        </div>
+
+        <div class="bg-gray-50 p-3 rounded-lg">
+          <div class="text-gray-800 font-semibold text-sm">Dispositivo MAC</div>
+          <div class="text-gray-900 text-sm font-mono">
+            {{ selectedDevice.mac_address }}
+          </div>
+        </div>
+
+        <div class="bg-gray-50 p-3 rounded-lg">
+          <div class="text-gray-800 font-semibold text-sm">Primer Registro</div>
+          <div class="text-gray-900 text-sm">
+            {{
+              getCurrentData().length > 0
+                ? (getCurrentData()[0].timestamp | date : "short")
+                : "N/A"
+            }}
+          </div>
+        </div>
+
+        <div class="bg-gray-50 p-3 rounded-lg">
+          <div class="text-gray-800 font-semibold text-sm">Último Registro</div>
+          <div class="text-gray-900 text-sm">
+            {{
+              getCurrentData().length > 0
+                ? (getCurrentData()[getCurrentData().length - 1].timestamp
+                  | date : "short")
+                : "N/A"
+            }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estado cuando no se ha seleccionado nada o no hay datos -->
+  <div
+    *ngIf="
+      !isLoading &&
+      !hasError &&
+      (!selectedDevice || !selectedSensorType || getCurrentData().length === 0)
+    "
+    class="bg-white rounded-lg shadow-lg p-12 text-center"
+  >
+    <div class="text-6xl mb-4">🔬</div>
+    <h3 class="text-xl font-semibold text-gray-800 mb-2">
+      Configura tu análisis de sensores
+    </h3>
+    <p class="text-gray-600 mb-4">
+      Selecciona un dispositivo sensor, tipo de sensor y período para comenzar
+      el análisis histórico.
+    </p>
+
+    <div class="max-w-md mx-auto text-left">
+      <div class="space-y-2 text-sm text-gray-600">
+        <div class="flex items-center gap-2">
+          <span
+            class="w-4 h-4 rounded-full"
+            [class]="selectedDevice ? 'bg-green-500' : 'bg-gray-300'"
+          ></span>
+          <span
+            >Dispositivo sensor {{ selectedDevice ? "✓" : "(pendiente)" }}</span
+          >
+        </div>
+        <div class="flex items-center gap-2">
+          <span
+            class="w-4 h-4 rounded-full"
+            [class]="selectedSensorType ? 'bg-green-500' : 'bg-gray-300'"
+          ></span>
+          <span
+            >Tipo de sensor {{ selectedSensorType ? "✓" : "(pendiente)" }}</span
+          >
+        </div>
+        <div class="flex items-center gap-2">
+          <span
+            class="w-4 h-4 rounded-full"
+            [class]="selectedPeriod ? 'bg-green-500' : 'bg-gray-300'"
+          ></span>
+          <span
+            >Período de análisis
+            {{ selectedPeriod ? "✓" : "(pendiente)" }}</span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -47,6 +47,87 @@
     </div>
   </div>
 
+  <!-- Navegación entre tipos de análisis -->
+  <div class="mb-6">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2
+        class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2"
+      >
+        🔄 Seleccionar Tipo de Análisis
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Análisis Energético (actual) -->
+        <div
+          class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border-2 border-blue-200"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <h3
+                class="text-lg font-semibold text-blue-800 flex items-center gap-2"
+              >
+                ⚡ Análisis Energético
+              </h3>
+              <p class="text-sm text-blue-600 mt-1">
+                Dispositivos PZEM - Voltaje, corriente, potencia y energía
+              </p>
+              <div class="text-xs text-blue-500 mt-2">
+                📊 Histogramas • 📈 Series temporales • 📉 Boxplots
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-200 text-blue-800"
+              >
+                Actual
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Análisis de Sensores -->
+        <button
+          (click)="goToSensorAnalysis()"
+          class="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border-2 border-green-200 hover:from-green-100 hover:to-green-200 transition-all duration-200 text-left group"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <h3
+                class="text-lg font-semibold text-green-800 flex items-center gap-2 group-hover:text-green-900"
+              >
+                🔬 Análisis de Sensores Ambientales
+              </h3>
+              <p class="text-sm text-green-600 mt-1 group-hover:text-green-700">
+                Sensores IoT - Temperatura, humedad, luz y movimiento
+              </p>
+              <div
+                class="text-xs text-green-500 mt-2 group-hover:text-green-600"
+              >
+                🌡️ Temperatura • 💡 Luz • 🚶 Movimiento • 📊 Estadísticas
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-200 text-green-800 group-hover:bg-green-300"
+              >
+                Cambiar →
+              </span>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Información adicional -->
+      <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+        <div class="text-gray-700 text-sm">
+          <strong>💡 Consejo:</strong> Usa el análisis energético para
+          monitorear consumo eléctrico y el análisis de sensores para
+          condiciones ambientales.
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Controles de selección -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
     <!-- Selector de tipo de gráfica -->
@@ -271,50 +352,132 @@
         "
       >
         <div class="bg-gray-50 rounded-lg p-6">
-          <h3 class="text-lg font-semibold mb-4">
-            📉 Análisis de Dispersión - {{ getVariableInfo().label }}
+          <h3 class="text-lg font-semibold mb-2">
+            � Resumen Estadístico - {{ getVariableInfo().label }}
           </h3>
-          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div class="bg-white p-3 rounded text-center">
-              <div class="text-xs text-gray-600">Mínimo</div>
+          <p class="text-sm text-gray-600 mb-6">
+            Análisis de distribución de datos energéticos - Cuartiles y valores
+            extremos
+          </p>
+
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div class="text-xs text-gray-500 mb-1">Valor Mínimo</div>
+              <div class="text-sm text-blue-600 font-medium mb-2">Mínimo</div>
               <div class="text-lg font-bold text-blue-600">
                 {{ boxplotData.min | number : "1.2-2" }}
               </div>
+              <div class="text-xs text-blue-500 mt-1">
+                Valor más bajo registrado
+              </div>
             </div>
-            <div class="bg-white p-3 rounded text-center">
-              <div class="text-xs text-gray-600">Q1</div>
+
+            <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div class="text-xs text-gray-500 mb-1">Primer Cuartil</div>
+              <div class="text-sm text-green-600 font-medium mb-2">
+                Q1 (25%)
+              </div>
               <div class="text-lg font-bold text-green-600">
                 {{ boxplotData.q1 | number : "1.2-2" }}
               </div>
-            </div>
-            <div class="bg-white p-3 rounded text-center">
-              <div class="text-xs text-gray-600">Mediana</div>
-              <div class="text-lg font-bold text-purple-600">
-                {{ boxplotData.median | number : "1.2-2" }}
+              <div class="text-xs text-green-500 mt-1">
+                25% de datos están por debajo
               </div>
             </div>
-            <div class="bg-white p-3 rounded text-center">
-              <div class="text-xs text-gray-600">Q3</div>
+
+            <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <div class="text-xs text-gray-500 mb-1">Valor Central</div>
+              <div class="text-sm text-yellow-600 font-medium mb-2">
+                Mediana (50%)
+              </div>
+              <div class="text-lg font-bold text-yellow-600">
+                {{ boxplotData.median | number : "1.2-2" }}
+              </div>
+              <div class="text-xs text-yellow-500 mt-1">
+                Valor que divide los datos a la mitad
+              </div>
+            </div>
+
+            <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
+              <div class="text-xs text-gray-500 mb-1">Tercer Cuartil</div>
+              <div class="text-sm text-orange-600 font-medium mb-2">
+                Q3 (75%)
+              </div>
               <div class="text-lg font-bold text-orange-600">
                 {{ boxplotData.q3 | number : "1.2-2" }}
               </div>
+              <div class="text-xs text-orange-500 mt-1">
+                75% de datos están por debajo
+              </div>
             </div>
-            <div class="bg-white p-3 rounded text-center">
-              <div class="text-xs text-gray-600">Máximo</div>
+
+            <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+              <div class="text-xs text-gray-500 mb-1">Valor Máximo</div>
+              <div class="text-sm text-red-600 font-medium mb-2">Máximo</div>
               <div class="text-lg font-bold text-red-600">
                 {{ boxplotData.max | number : "1.2-2" }}
               </div>
+              <div class="text-xs text-red-500 mt-1">
+                Valor más alto registrado
+              </div>
             </div>
           </div>
+
+          <!-- Explicación adicional -->
+          <div class="bg-white p-4 rounded-lg border mb-4">
+            <h5 class="text-sm font-semibold text-gray-700 mb-3">
+              ⚡ Interpretación para Datos Energéticos
+            </h5>
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-600"
+            >
+              <div class="flex items-start gap-2">
+                <span class="text-green-500 font-bold">Q1:</span>
+                <span
+                  >El 25% de las mediciones de
+                  {{ getVariableInfo().label.toLowerCase() }} están por debajo
+                  de este valor. Representa consumo/valores "bajos".</span
+                >
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="text-orange-500 font-bold">Q3:</span>
+                <span
+                  >El 75% de las mediciones están por debajo de este valor.
+                  Representa el límite de consumo/valores "altos".</span
+                >
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="text-blue-500 font-bold">Rango:</span>
+                <span
+                  >Entre Q1 y Q3 se encuentra el 50% central de tus datos
+                  energéticos (rango intercuartílico).</span
+                >
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="text-purple-500 font-bold">Uso:</span>
+                <span
+                  >Identifica patrones de consumo normal vs picos energéticos o
+                  valores atípicos en tu instalación.</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Valores atípicos -->
           <div
             *ngIf="boxplotData.outliers && boxplotData.outliers.length > 0"
-            class="mt-4"
+            class="bg-yellow-50 p-4 rounded-lg border border-yellow-200"
           >
-            <div class="text-sm font-semibold text-gray-700">
-              🔍 Valores Atípicos (Outliers):
+            <div class="text-sm font-semibold text-yellow-800 mb-2">
+              🔍 Valores Atípicos (Outliers) Detectados:
             </div>
-            <div class="text-sm text-gray-600">
-              {{ boxplotData.outliers.length }} valores detectados
+            <div class="text-sm text-yellow-700 mb-2">
+              {{ boxplotData.outliers.length }} valores fuera del rango normal
+              detectados
+            </div>
+            <div class="text-xs text-yellow-600">
+              💡 Los outliers pueden indicar picos de consumo, fallas en equipos
+              o eventos especiales en tu instalación eléctrica.
             </div>
           </div>
         </div>
