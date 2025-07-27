@@ -36,6 +36,12 @@ const routes: Routes = [
 
     canActivate: [AuthGuard],
   },
+  {
+    path: 'automation',
+    loadChildren: () =>
+      import('./automation/automation.module').then((m) => m.AutomationModule),
+    canActivate: [AuthGuard],
+  },
 ];
 
 @NgModule({

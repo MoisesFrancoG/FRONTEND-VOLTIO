@@ -1,0 +1,640 @@
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div
+    class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg p-6 mb-6 text-white"
+  >
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold mb-2 flex items-center">
+          <span class="text-4xl mr-3">🤖</span>
+          Automatización
+        </h1>
+        <p class="text-blue-100 text-lg">
+          Gestiona las reglas de automatización de tus dispositivos IoT
+        </p>
+        <div class="mt-3 flex items-center space-x-4 text-sm">
+          <div class="flex items-center">
+            <span
+              class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"
+            ></span>
+            <span>{{ getActiveRulesCount() }} reglas activas</span>
+          </div>
+          <div class="flex items-center">
+            <span class="w-2 h-2 bg-gray-300 rounded-full mr-2"></span>
+            <span>{{ getInactiveRulesCount() }} reglas inactivas</span>
+          </div>
+        </div>
+      </div>
+      <button
+        (click)="showCreateForm()"
+        class="bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+        [disabled]="loading"
+      >
+        <span class="text-xl mr-2">➕</span>
+        Nueva Regla
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="flex justify-center py-8">
+    <div
+      class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"
+    ></div>
+  </div>
+
+  <!-- Formulario -->
+  <div
+    *ngIf="showForm"
+    class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6"
+  >
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+        <span class="text-3xl mr-3">{{ isEditing ? "📝" : "✨" }}</span>
+        {{ isEditing ? "Editar Regla" : "Nueva Regla" }}
+      </h2>
+      <button
+        type="button"
+        (click)="cancelForm()"
+        class="text-gray-400 hover:text-gray-600 transition-colors"
+        [disabled]="loading"
+      >
+        <span class="text-xl">❌</span>
+      </button>
+    </div>
+
+    <form [formGroup]="ruleForm" (ngSubmit)="saveRule()">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Nombre -->
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            📝 Nombre de la Regla
+          </label>
+          <input
+            type="text"
+            formControlName="name"
+            placeholder="Ej: Encender luz al detectar movimiento"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            [class.border-red-500]="
+              ruleForm.get('name')?.invalid && ruleForm.get('name')?.touched
+            "
+          />
+          <div
+            *ngIf="
+              ruleForm.get('name')?.invalid && ruleForm.get('name')?.touched
+            "
+            class="text-red-500 text-sm mt-1"
+          >
+            El nombre es requerido (máximo 100 caracteres)
+          </div>
+        </div>
+
+        <!-- Dispositivo de Sensado -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            📡 Nodo de Sensado (Tipo 2)
+            <span *ngIf="isEditing" class="text-red-500 text-xs ml-2">
+              🔒 No editable
+            </span>
+          </label>
+          <select
+            formControlName="trigger_device_mac"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            [class.border-red-500]="
+              ruleForm.get('trigger_device_mac')?.invalid &&
+              ruleForm.get('trigger_device_mac')?.touched
+            "
+            [class.bg-gray-100]="isEditing"
+          >
+            <option value="">Selecciona un nodo de sensado</option>
+            <option value="" *ngIf="sensorDevices.length === 0" disabled>
+              No hay nodos de sensado disponibles (tipo 2)
+            </option>
+            <option
+              *ngFor="let device of sensorDevices"
+              [value]="device.mac_address"
+            >
+              {{ device.name }} ({{ device.mac_address }})
+            </option>
+          </select>
+          <div
+            *ngIf="
+              ruleForm.get('trigger_device_mac')?.invalid &&
+              ruleForm.get('trigger_device_mac')?.touched
+            "
+            class="text-red-500 text-sm mt-1"
+          >
+            Selecciona un nodo de sensado (device_type_id = 2)
+          </div>
+          <small class="text-gray-500 text-xs">
+            Solo se muestran dispositivos de tipo 2 (nodos de sensado)
+          </small>
+        </div>
+
+        <!-- Métrica a Evaluar -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            📊 Métrica a Evaluar
+            <span *ngIf="isEditing" class="text-red-500 text-xs ml-2">
+              🔒 No editable
+            </span>
+          </label>
+          <select
+            formControlName="trigger_metric"
+            (change)="onTriggerMetricChange()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            [class.border-red-500]="
+              ruleForm.get('trigger_metric')?.invalid &&
+              ruleForm.get('trigger_metric')?.touched
+            "
+            [class.bg-gray-100]="isEditing"
+          >
+            <option value="">Selecciona una métrica</option>
+            <option
+              *ngFor="let metric of triggerMetrics"
+              [value]="metric.value"
+            >
+              {{ metric.label }}
+            </option>
+          </select>
+          <div
+            *ngIf="
+              ruleForm.get('trigger_metric')?.invalid &&
+              ruleForm.get('trigger_metric')?.touched
+            "
+            class="text-red-500 text-sm mt-1"
+          >
+            Selecciona una métrica
+          </div>
+        </div>
+
+        <!-- Operador de Comparación -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            ⚖️ Operador de Comparación
+            <span *ngIf="isEditing" class="text-red-500 text-xs ml-2">
+              🔒 No editable
+            </span>
+          </label>
+          <select
+            formControlName="comparison_operator"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            [class.border-red-500]="
+              ruleForm.get('comparison_operator')?.invalid &&
+              ruleForm.get('comparison_operator')?.touched
+            "
+            [class.bg-gray-100]="isEditing"
+          >
+            <option value="">Selecciona un operador</option>
+            <option
+              *ngFor="let operator of comparisonOperators"
+              [value]="operator.value"
+            >
+              {{ operator.label }}
+            </option>
+          </select>
+          <div
+            *ngIf="
+              ruleForm.get('comparison_operator')?.invalid &&
+              ruleForm.get('comparison_operator')?.touched
+            "
+            class="text-red-500 text-sm mt-1"
+          >
+            Selecciona un operador
+          </div>
+        </div>
+
+        <!-- Valor Umbral -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            🎯 Valor Umbral
+          </label>
+          <input
+            type="number"
+            formControlName="threshold_value"
+            step="0.01"
+            min="0"
+            placeholder="0"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            [class.border-red-500]="
+              ruleForm.get('threshold_value')?.invalid &&
+              ruleForm.get('threshold_value')?.touched
+            "
+          />
+          <div
+            *ngIf="
+              ruleForm.get('threshold_value')?.invalid &&
+              ruleForm.get('threshold_value')?.touched
+            "
+            class="text-red-500 text-sm mt-1"
+          >
+            Ingresa un valor válido
+          </div>
+        </div>
+
+        <!-- Dispositivo de Acción -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            ⚡ Dispositivo de Acción (Otros tipos)
+            <span *ngIf="isEditing" class="text-red-500 text-xs ml-2">
+              🔒 No editable
+            </span>
+          </label>
+          <select
+            formControlName="action_device_mac"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            [class.border-red-500]="
+              ruleForm.get('action_device_mac')?.invalid &&
+              ruleForm.get('action_device_mac')?.touched
+            "
+            [class.bg-gray-100]="isEditing"
+          >
+            <option value="">Selecciona un dispositivo de acción</option>
+            <option value="" *ngIf="actionDevices.length === 0" disabled>
+              No hay dispositivos de acción disponibles (tipos != 2)
+            </option>
+            <option
+              *ngFor="let device of actionDevices"
+              [value]="device.mac_address"
+            >
+              {{ device.name }} - Tipo {{ device.device_type_id }} ({{
+                device.mac_address
+              }})
+            </option>
+          </select>
+          <div
+            *ngIf="
+              ruleForm.get('action_device_mac')?.invalid &&
+              ruleForm.get('action_device_mac')?.touched
+            "
+            class="text-red-500 text-sm mt-1"
+          >
+            Selecciona un dispositivo de acción
+          </div>
+          <small class="text-gray-500 text-xs">
+            Se muestran todos los dispositivos excepto tipo 2 (nodos de sensado)
+          </small>
+        </div>
+
+        <!-- Tipo de Acción -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            🔧 Tipo de Acción
+            <span *ngIf="isEditing" class="text-red-500 text-xs ml-2">
+              🔒 No editable
+            </span>
+          </label>
+          <select
+            formControlName="action_capability_id"
+            (change)="onActionCapabilityChange()"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            [class.border-red-500]="
+              ruleForm.get('action_capability_id')?.invalid &&
+              ruleForm.get('action_capability_id')?.touched
+            "
+            [class.bg-gray-100]="isEditing"
+          >
+            <option value="">Selecciona un tipo</option>
+            <option
+              *ngFor="let capability of actionCapabilities"
+              [value]="capability.value"
+            >
+              {{ capability.label }}
+            </option>
+          </select>
+          <div
+            *ngIf="
+              ruleForm.get('action_capability_id')?.invalid &&
+              ruleForm.get('action_capability_id')?.touched
+            "
+            class="text-red-500 text-sm mt-1"
+          >
+            Selecciona un tipo de acción
+          </div>
+        </div>
+
+        <!-- Acción a Ejecutar -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            🎬 Acción a Ejecutar
+            <span *ngIf="isEditing" class="text-red-500 text-xs ml-2">
+              🔒 No editable
+            </span>
+          </label>
+          <select
+            formControlName="action_payload"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            [class.border-red-500]="
+              ruleForm.get('action_payload')?.invalid &&
+              ruleForm.get('action_payload')?.touched
+            "
+            [class.bg-gray-100]="isEditing"
+          >
+            <option value="">Selecciona una acción</option>
+            <option
+              *ngFor="let payload of getAvailablePayloads()"
+              [value]="payload.value"
+            >
+              {{ payload.label }}
+            </option>
+          </select>
+          <div
+            *ngIf="
+              ruleForm.get('action_payload')?.invalid &&
+              ruleForm.get('action_payload')?.touched
+            "
+            class="text-red-500 text-sm mt-1"
+          >
+            Selecciona una acción
+          </div>
+        </div>
+
+        <!-- Horario de Inicio (Opcional) -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            🌅 Hora de Inicio (Opcional)
+          </label>
+          <input
+            type="time"
+            formControlName="active_time_start"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          <small class="text-gray-500"
+            >Deja vacío para que funcione todo el día</small
+          >
+        </div>
+
+        <!-- Horario de Fin (Opcional) -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            🌙 Hora de Fin (Opcional)
+          </label>
+          <input
+            type="time"
+            formControlName="active_time_end"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+          <small class="text-gray-500"
+            >Deja vacío para que funcione todo el día</small
+          >
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-200">
+        <button
+          type="button"
+          (click)="cancelForm()"
+          class="inline-flex items-center px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+          [disabled]="loading"
+        >
+          <span class="mr-2">❌</span>
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none"
+          [disabled]="loading || ruleForm.invalid"
+        >
+          <span class="mr-2">{{ isEditing ? "💾" : "✨" }}</span>
+          {{ isEditing ? "Actualizar" : "Crear" }} Regla
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Lista de Reglas -->
+  <div class="bg-white rounded-lg shadow-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-800">
+        📋 Reglas de Automatización ({{ rules.length }})
+      </h3>
+    </div>
+
+    <!-- Mensaje cuando no hay reglas -->
+    <div *ngIf="rules.length === 0 && !loading" class="p-12 text-center">
+      <div
+        class="mx-auto w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6"
+      >
+        <span class="text-4xl">🤖</span>
+      </div>
+      <h4 class="text-2xl font-bold text-gray-700 mb-3">
+        No hay reglas de automatización
+      </h4>
+      <p class="text-gray-500 mb-6 max-w-md mx-auto">
+        Crea tu primera regla para automatizar tus dispositivos IoT y hacer que
+        trabajen de forma inteligente
+      </p>
+      <button
+        (click)="showCreateForm()"
+        class="inline-flex items-center bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+      >
+        <span class="text-xl mr-2">➕</span>
+        Crear Primera Regla
+      </button>
+    </div>
+
+    <!-- Tabla de Reglas -->
+    <div *ngIf="rules.length > 0" class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
+          <tr>
+            <th
+              class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+            >
+              📋 Regla
+            </th>
+            <th
+              class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+            >
+              🎯 Condición
+            </th>
+            <th
+              class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+            >
+              ⚡ Acción
+            </th>
+            <th
+              class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+            >
+              ⏰ Horario
+            </th>
+            <th
+              class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+            >
+              🔄 Estado
+            </th>
+            <th
+              class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+            >
+              🛠️ Acciones
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr
+            *ngFor="let rule of rules"
+            class="hover:bg-gray-50 transition-colors duration-150"
+          >
+            <!-- Información de la Regla -->
+            <td class="px-6 py-4">
+              <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0">
+                  <div
+                    class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                  >
+                    🤖
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-gray-900 truncate">
+                    {{ rule.name }}
+                  </div>
+                  <div class="text-xs text-gray-500 mt-1 flex items-center">
+                    <span
+                      class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                    >
+                      📡 {{ getDeviceName(rule.trigger_device_mac) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Condición -->
+            <td class="px-6 py-4">
+              <div class="text-sm font-medium text-gray-900 mb-1">
+                {{ getTriggerMetricLabel(rule.trigger_metric) }}
+              </div>
+              <div class="text-xs text-gray-600 flex items-center space-x-1">
+                <span
+                  class="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded font-medium"
+                >
+                  {{ getComparisonOperatorLabel(rule.comparison_operator) }}
+                </span>
+                <span
+                  class="px-2 py-0.5 bg-green-100 text-green-800 rounded font-medium"
+                >
+                  {{ rule.threshold_value }}
+                </span>
+              </div>
+            </td>
+
+            <!-- Acción -->
+            <td class="px-6 py-4">
+              <div class="text-sm font-medium text-gray-900 mb-1">
+                ⚡ {{ getDeviceName(rule.action_device_mac) }}
+              </div>
+              <div class="text-xs">
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-medium"
+                >
+                  {{ getActionCapabilityLabel(rule.action_capability_id) }}
+                </span>
+                <span
+                  class="ml-1 px-2 py-0.5 bg-gray-100 text-gray-800 rounded font-medium"
+                >
+                  {{ rule.action_payload }}
+                </span>
+              </div>
+            </td>
+
+            <!-- Horario -->
+            <td class="px-6 py-4">
+              <div
+                *ngIf="rule.active_time_start && rule.active_time_end"
+                class="text-sm"
+              >
+                <div class="flex items-center space-x-2">
+                  <span
+                    class="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-800 rounded-md text-xs font-medium"
+                  >
+                    🌅 {{ formatTime(rule.active_time_start) }}
+                  </span>
+                  <span class="text-gray-400">→</span>
+                  <span
+                    class="inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-800 rounded-md text-xs font-medium"
+                  >
+                    🌙 {{ formatTime(rule.active_time_end) }}
+                  </span>
+                </div>
+              </div>
+              <div
+                *ngIf="!rule.active_time_start || !rule.active_time_end"
+                class="text-sm"
+              >
+                <span
+                  class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium"
+                >
+                  ⏰ 24/7 Activa
+                </span>
+              </div>
+            </td>
+
+            <!-- Estado -->
+            <td class="px-6 py-4">
+              <div class="flex items-center">
+                <div
+                  class="flex-shrink-0 w-2 h-2 rounded-full mr-2"
+                  [class]="
+                    rule.is_active ? 'bg-green-400 animate-pulse' : 'bg-red-400'
+                  "
+                ></div>
+                <span
+                  class="px-3 py-1 text-xs font-semibold rounded-full"
+                  [class]="
+                    rule.is_active
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  "
+                >
+                  {{ rule.is_active ? "✅ Activa" : "❌ Inactiva" }}
+                </span>
+              </div>
+            </td>
+
+            <!-- Acciones -->
+            <td class="px-6 py-4 text-sm font-medium">
+              <div class="flex flex-wrap gap-2">
+                <!-- Botón Toggle Estado -->
+                <button
+                  (click)="toggleRuleStatus(rule)"
+                  class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                  [class]="
+                    rule.is_active
+                      ? 'bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100'
+                      : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'
+                  "
+                  [disabled]="loading"
+                >
+                  <span class="mr-1">{{ rule.is_active ? "⏸️" : "▶️" }}</span>
+                  <span>{{ rule.is_active ? "Pausar" : "Activar" }}</span>
+                </button>
+
+                <!-- Botón Editar -->
+                <button
+                  (click)="editRule(rule)"
+                  class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all duration-200 shadow-sm hover:shadow-md"
+                  [disabled]="loading"
+                >
+                  <span class="mr-1">✏️</span>
+                  <span>Editar</span>
+                </button>
+
+                <!-- Botón Eliminar -->
+                <button
+                  (click)="deleteRule(rule.id!)"
+                  class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-all duration-200 shadow-sm hover:shadow-md"
+                  [disabled]="loading"
+                >
+                  <span class="mr-1">🗑️</span>
+                  <span>Eliminar</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
