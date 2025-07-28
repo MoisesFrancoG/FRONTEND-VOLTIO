@@ -17,9 +17,9 @@ export class BluetoothRegisterComponent implements OnInit {
   devices: any[] = [];
   @Output() registered = new EventEmitter<void>();
   step: 'idle' | 'connecting' | 'form' | 'saving' | 'done' = 'idle';
-  
+
   get isAlreadyRegistered(): boolean {
-    return this.devices.some(d => d.mac_address === this.mac);
+    return this.devices.some((d) => d.mac_address === this.mac);
   }
   error: string | null = null;
   deviceName = '';
@@ -34,11 +34,10 @@ export class BluetoothRegisterComponent implements OnInit {
   server: any;
   service: any;
 
-
   constructor(private deviceService: DeviceService) {}
 
   ngOnInit() {
-    this.deviceService.getMyDevices().subscribe(devices => {
+    this.deviceService.getMyDevices().subscribe((devices) => {
       this.devices = devices;
     });
   }
@@ -95,7 +94,7 @@ export class BluetoothRegisterComponent implements OnInit {
       await ssidChar.writeValue(encoder.encode(this.ssid));
       await passChar.writeValue(encoder.encode(this.password));
       await saveChar.writeValue(encoder.encode('SAVE'));
-      const exists = this.devices.some(d => d.mac_address === this.mac);
+      const exists = this.devices.some((d) => d.mac_address === this.mac);
       if (!exists) {
         await this.registerDevice();
       }

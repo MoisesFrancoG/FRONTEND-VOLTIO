@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../auth/services/auth.service';
 
 import { SensorHistoryComponent } from './sensor-history.component';
 
@@ -8,9 +11,10 @@ describe('SensorHistoryComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [SensorHistoryComponent]
-    })
-    .compileComponents();
+      imports: [HttpClientTestingModule, FormsModule],
+      declarations: [SensorHistoryComponent],
+      providers: [AuthService],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(SensorHistoryComponent);
     component = fixture.componentInstance;

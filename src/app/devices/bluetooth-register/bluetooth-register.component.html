@@ -47,7 +47,11 @@
         </button>
       </div>
       <button type="submit" class="btn btn-success">
-        {{ isAlreadyRegistered ? 'Guardar Configuración Wi-Fi' : 'Guardar Configuración y Registrar' }}
+        {{
+          isAlreadyRegistered
+            ? "Guardar Configuración Wi-Fi"
+            : "Guardar Configuración y Registrar"
+        }}
       </button>
     </form>
   </div>
