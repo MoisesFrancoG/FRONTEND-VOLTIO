@@ -5,6 +5,7 @@ import {
   OnDestroy,
   OnChanges,
   SimpleChanges,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { EChartsOption } from 'echarts';
 import { Device } from '../../devices/services/device.service';
@@ -48,7 +49,7 @@ export class PzemMonitoringComponent implements OnInit, OnDestroy, OnChanges {
   energyChartOption: EChartsOption = {};
   frequencyPfChartOption: EChartsOption = {};
 
-  constructor() {
+  constructor(private cdRef: ChangeDetectorRef) {
     console.log('🔧 PzemMonitoringComponent: Constructor llamado');
     this.initializeChartOptions();
   }
@@ -148,16 +149,12 @@ export class PzemMonitoringComponent implements OnInit, OnDestroy, OnChanges {
   // Procesamiento de datos del WebSocket específico para PZEM
   processWebSocketData(data: any): void {
     const now = new Date().toLocaleTimeString();
-
     try {
       const contentObj = JSON.parse(data.content);
       const messageObj = JSON.parse(contentObj.message);
-
       console.log('📊 Datos PZEM procesados:', messageObj);
-
       // Agregar tiempo solo una vez por mensaje
       this.timeData.push(now);
-
       // Mantener solo los últimos 50 puntos de datos
       if (this.timeData.length > 50) {
         this.timeData.shift();
@@ -168,7 +165,6 @@ export class PzemMonitoringComponent implements OnInit, OnDestroy, OnChanges {
         this.frequencyData.shift();
         this.powerFactorData.shift();
       }
-
       // Procesar datos eléctricos PZEM
       const payload = messageObj.payload;
       if (payload) {
@@ -178,7 +174,6 @@ export class PzemMonitoringComponent implements OnInit, OnDestroy, OnChanges {
         this.energyData.push(payload.energy || 0);
         this.frequencyData.push(payload.frequency || 0);
         this.powerFactorData.push(payload.powerFactor || 0);
-
         // Actualizar últimos valores
         this.lastSensorValues.voltage = payload.voltage || 0;
         this.lastSensorValues.current = payload.current || 0;
@@ -186,11 +181,10 @@ export class PzemMonitoringComponent implements OnInit, OnDestroy, OnChanges {
         this.lastSensorValues.energy = payload.energy || 0;
         this.lastSensorValues.frequency = payload.frequency || 0;
         this.lastSensorValues.powerFactor = payload.powerFactor || 0;
-
         console.log('⚡ Valores PZEM actualizados:', this.lastSensorValues);
       }
-
       this.updateChartData();
+      this.cdRef.detectChanges(); // Soluciona ExpressionChangedAfterItHasBeenCheckedError
     } catch (error) {
       console.error('❌ Error procesando datos del sensor PZEM:', error);
     }
