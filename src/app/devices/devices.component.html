@@ -235,6 +235,28 @@
 
                   <!-- Acciones del dispositivo -->
                   <div class="flex flex-col items-center gap-2 ml-4">
+                    <!-- Botón de control para dispositivos tipo 1 y 3 -->
+                    <button
+                      *ngIf="
+                        device.device_type_id === 1 ||
+                        device.device_type_id === 3
+                      "
+                      (click)="openControlModal(device)"
+                      class="p-2 rounded-lg bg-green-100 hover:bg-green-200 transition-colors group/btn"
+                      title="Controlar dispositivo"
+                    >
+                      <svg
+                        class="w-4 h-4 text-green-600 group-hover/btn:text-green-700"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        ></path>
+                      </svg>
+                    </button>
+
+                    <!-- Botón de opciones -->
                     <button
                       class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors group/btn"
                     >
@@ -436,6 +458,184 @@
             </ng-container>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Control de Dispositivo -->
+<div
+  *ngIf="showControlModal"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+  (click)="closeControlModal()"
+>
+  <div
+    class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Header del Modal -->
+    <div
+      class="bg-gradient-to-r p-6 text-white rounded-t-2xl"
+      [ngClass]="{
+        'from-green-500 to-emerald-500': selectedDevice?.device_type_id === 1,
+        'from-blue-500 to-indigo-500': selectedDevice?.device_type_id === 3
+      }"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-xl font-bold flex items-center gap-2">
+            <span class="text-2xl">
+              {{ selectedDevice?.device_type_id === 1 ? "⚡" : "📡" }}
+            </span>
+            Control de Dispositivo
+          </h3>
+          <p class="text-white/80 text-sm mt-1">
+            {{ selectedDevice?.name }}
+          </p>
+        </div>
+        <button
+          (click)="closeControlModal()"
+          class="p-2 hover:bg-white/20 rounded-lg transition-colors"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido del Modal -->
+    <div class="p-6">
+      <!-- Información del dispositivo -->
+      <div class="mb-6 p-4 bg-gray-50 rounded-xl">
+        <div class="flex items-center gap-3 mb-2">
+          <div
+            class="w-3 h-3 rounded-full"
+            [ngClass]="
+              selectedDevice?.is_active ? 'bg-green-500' : 'bg-red-500'
+            "
+          ></div>
+          <span class="font-semibold text-gray-800">{{
+            selectedDevice?.name
+          }}</span>
+        </div>
+        <div class="text-sm text-gray-600 space-y-1">
+          <div class="flex justify-between">
+            <span>MAC:</span>
+            <span class="font-mono">{{ selectedDevice?.mac_address }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Tipo:</span>
+            <span>{{ selectedDevice?.device_type_name }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controles según el tipo de dispositivo -->
+      <div class="space-y-4">
+        <!-- Controles para dispositivo tipo 1 (PZEM - Relay) -->
+        <div *ngIf="selectedDevice?.device_type_id === 1">
+          <h4 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <span class="text-green-500">🔌</span>
+            Control de Relay
+          </h4>
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              (click)="sendRelayCommand('ON')"
+              [disabled]="isLoading"
+              class="py-3 px-4 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <span class="text-lg">🟢</span>
+              <span>Encender</span>
+            </button>
+            <button
+              (click)="sendRelayCommand('OFF')"
+              [disabled]="isLoading"
+              class="py-3 px-4 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <span class="text-lg">🔴</span>
+              <span>Apagar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Controles para dispositivo tipo 3 (RPI - IR) -->
+        <div *ngIf="selectedDevice?.device_type_id === 3">
+          <h4 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <span class="text-blue-500">📡</span>
+            Control Infrarrojo
+          </h4>
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              (click)="sendIRCommand('ON')"
+              [disabled]="isLoading"
+              class="py-3 px-4 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <span class="text-lg">📶</span>
+              <span>Activar</span>
+            </button>
+            <button
+              (click)="sendIRCommand('OFF')"
+              [disabled]="isLoading"
+              class="py-3 px-4 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <span class="text-lg">📵</span>
+              <span>Desactivar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Estado de carga -->
+        <div *ngIf="isLoading" class="flex items-center justify-center py-4">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-5 h-5 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin"
+            ></div>
+            <span class="text-gray-600">Enviando comando...</span>
+          </div>
+        </div>
+
+        <!-- Mensaje de respuesta -->
+        <div
+          *ngIf="commandResponse"
+          class="p-3 rounded-xl"
+          [ngClass]="{
+            'bg-green-50 border border-green-200': commandResponse.success,
+            'bg-red-50 border border-red-200': !commandResponse.success
+          }"
+        >
+          <div class="flex items-center gap-2">
+            <span
+              [ngClass]="{
+                'text-green-500': commandResponse.success,
+                'text-red-500': !commandResponse.success
+              }"
+            >
+              {{ commandResponse.success ? "✅" : "❌" }}
+            </span>
+            <span
+              class="font-semibold"
+              [ngClass]="{
+                'text-green-800': commandResponse.success,
+                'text-red-800': !commandResponse.success
+              }"
+            >
+              {{ commandResponse.message }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones del modal -->
+      <div class="flex justify-end mt-6 pt-4 border-t border-gray-200">
+        <button
+          (click)="closeControlModal()"
+          class="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+        >
+          Cerrar
+        </button>
       </div>
     </div>
   </div>
