@@ -1,229 +1,539 @@
-<div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-  <div
-    class="relative w-[80vw] h-[80vh] rounded-3xl overflow-hidden shadow-xl bg-white flex items-center justify-center mb-8 my-6"
-  >
-    <img
-      src="raoy.jpg"
-      alt="Imagen principal"
-      class="absolute inset-0 w-full h-full object-cover opacity-100"
-    />
-    <div
-      class="relative z-10 flex flex-col items-center justify-center text-center px-8"
-    >
-      <h1
-        class="text-5xl font-bold text-white py-3 px-8 rounded-full shadow-lg transition"
-      >
-        🚀 Controla tu energia, domina tus costos - DEPLOY TEST v2.0
-      </h1>
-      <p
-        class="text-xl text-white font-semibold py-3 px-8 rounded-full shadow-lg transition"
-      >
-        ⚡ voltio te ofrece una vision clara de tu consumo electrico,
-        permitiendote tomar decisiones inteligentes para ahorrar y optimizar el
-        uso de energia en tu hogar o negocio - Actualizado: Julio 2025
-      </p>
-      <button
-        class="start-button bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition"
-        routerLink="/auth/register"
-      >
-        🎯 Empecemos - Deploy Funcionando
-      </button>
-    </div>
-  </div>
-  <div class="w-[80vw] text-center my-10">
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">
-      Características principales
-    </h2>
-    <p class="text-lg text-gray-600">
-      Voltio integra sensores avanzados y una interfaz intuitiva para ofrecerte
-      una experiencia completa en la gestión de energía.
-    </p>
-  </div>
-  <div class="flex flex-row gap-8 justify-center">
-    <div
-      class="flex items-center rounded-xl shadow-md px-6 py-5 w-80"
-      style="background-color: rgb(251, 234, 182)"
-    >
-      <span class="text-xl font-semibold text-gray-800 flex-1"
-        >Monitoreo en tiempo real</span
-      >
-      <svg
-        class="w-8 h-8 text-blue-600"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M13 16h-1v-4h-1m4 0h-1v-4h-1m4 0h-1v-4h-1"
-        ></path>
-      </svg>
-    </div>
-    <div
-      class="flex items-center rounded-xl shadow-md px-6 py-5 w-80"
-      style="background-color: rgb(251, 234, 182)"
-    >
-      <span class="text-xl font-semibold text-gray-800 flex-1"
-        >Alertas inteligentes</span
-      >
-      <svg
-        class="w-8 h-8 text-yellow-500"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M12 9v2m0 4h.01"
-        ></path>
-        <circle
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          stroke-width="2"
-          fill="none"
-        />
-      </svg>
+<div
+  class="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-green-50 overflow-hidden"
+>
+  <!-- Hero Section Rediseñado -->
+  <div class="relative min-h-screen flex items-center justify-center px-4 py-8">
+    <!-- Elementos decorativos de fondo -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div
+        class="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-green-400/20 to-emerald-400/20 rounded-full blur-3xl animate-pulse"
+      ></div>
+      <div
+        class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl animate-pulse delay-1000"
+      ></div>
     </div>
 
-    <div
-      class="flex items-center rounded-xl shadow-md px-6 py-5 w-80"
-      style="background-color: rgb(251, 234, 182)"
-    >
-      <span class="text-xl font-semibold text-gray-800 flex-1"
-        >Análisis detallado</span
+    <div class="relative w-full max-w-7xl mx-auto">
+      <!-- Contenedor principal del hero -->
+      <div
+        class="relative w-full max-w-6xl mx-auto rounded-3xl overflow-hidden shadow-2xl bg-white/10 backdrop-blur-sm border border-white/20"
       >
-      <svg
-        class="w-8 h-8 text-green-600"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M4 17h16M4 13h16M4 9h16M4 5h16"
-        ></path>
-      </svg>
+        <!-- Imagen de fondo con overlay -->
+        <div class="relative h-[85vh] flex items-center justify-center">
+          <img
+            src="raoy.jpg"
+            alt="Voltio - Control de Energía"
+            class="absolute inset-0 w-full h-full object-cover"
+          />
+          <!-- Overlay moderno con gradiente -->
+          <div
+            class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent"
+          ></div>
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"
+          ></div>
+
+          <!-- Contenido del hero -->
+          <div
+            class="relative z-10 flex flex-col items-center justify-center text-center px-6 md:px-12 max-w-5xl mx-auto"
+          >
+
+            <!-- Título principal mejorado -->
+            <h1
+              class="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight"
+            >
+              <span class="block">🚀 Controla tu</span>
+              <span
+                class="block bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent"
+              >
+                energía
+              </span>
+              <span class="block text-3xl md:text-4xl lg:text-5xl mt-2"
+                >domina tus costos</span
+              >
+            </h1>
+
+            <!-- Descripción mejorada -->
+            <p
+              class="text-xl md:text-2xl text-white/90 font-medium mb-8 max-w-4xl leading-relaxed"
+            >
+              ⚡ <span class="text-green-300 font-semibold">Voltio</span> te
+              ofrece una visión clara de tu consumo eléctrico, permitiéndote
+              tomar
+              <span class="text-emerald-300">decisiones inteligentes</span> para
+              ahorrar y optimizar el uso de energía en tu hogar o negocio
+            </p>
+
+            <!-- CTA Button mejorado -->
+            <div class="flex flex-col sm:flex-row gap-4 items-center">
+              <button
+                class="group bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 px-8 rounded-full shadow-2xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden"
+                routerLink="/auth/register"
+              >
+                <div
+                  class="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"
+                ></div>
+                <span class="relative flex items-center gap-3">
+                  <span class="text-xl">🎯</span>
+                  <span>Empezar Ahora</span>
+                  <svg
+                    class="w-5 h-5 transform group-hover:translate-x-1 transition-transform"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                      clip-rule="evenodd"
+                    ></path>
+                  </svg>
+                </span>
+              </button>
+            </div>
+
+            <!-- Estadísticas rápidas -->
+            <div
+              class="flex flex-wrap justify-center gap-8 mt-12 pt-8 border-t border-white/20"
+            >
+              <div class="text-center">
+                <div class="text-2xl md:text-3xl font-bold text-green-300">
+                  24/7
+                </div>
+                <div class="text-white/80 text-sm">Monitoreo</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl md:text-3xl font-bold text-emerald-300">
+                  6
+                </div>
+                <div class="text-white/80 text-sm">Sensores IoT</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl md:text-3xl font-bold text-blue-300">
+                  Real Time
+                </div>
+                <div class="text-white/80 text-sm">Análisis</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="w-[80vw] mx-auto mt-16 text-center">
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">
-      Sensores que hacen funcionar a Voltio
-    </h2>
-    <p class="text-lg text-gray-600 mb-10">
-      Los sensores de Voltio monitorean el consumo en tiempo real,
-      proporcionando datos detallados sobre el uso de la corriente eléctrica en
-      tu hogar. Estos datos te ayudan a identificar patrones de consumo,
-      optimizar el uso de energía y reducir costos.
-    </p>
-    <!-- Cards de sensores -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-      <!-- Card 1 -->
-      <div
-        class="bg-white rounded-xl shadow-md px-6 py-8 flex flex-col items-center"
-      >
-        <span class="text-xl font-bold text-gray-800 mb-2">Raspberry PI 4</span>
-        <p class="text-sm text-gray-600 mb-4 text-center">
-          Actúa como el cerebro del sistema, gestionando la comunicación entre
-          los sensores y la aplicación.
+  <!-- Sección de Características Rediseñada -->
+  <div class="relative py-20 px-4">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header de la sección -->
+      <div class="text-center mb-16">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full font-semibold mb-6"
+        >
+          <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+          Características Principales
+        </div>
+        <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          Todo lo que necesitas para
+          <span
+            class="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent"
+          >
+            controlar tu energía
+          </span>
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          Voltio integra sensores avanzados y una interfaz intuitiva para
+          ofrecerte una experiencia completa en la gestión de energía
+          inteligente.
         </p>
-        <img
-          src="rasp.png"
-          alt="Sensor Principal"
-          class="w-20 h-20 object-contain"
-        />
       </div>
-      <!-- Card 2 -->
-      <div
-        class="bg-white rounded-xl shadow-md px-6 py-8 flex flex-col items-center"
-      >
-        <span class="text-xl font-bold text-gray-800 mb-2">ESP32</span>
-        <p class="text-sm text-gray-600 mb-4 text-center">
-          Microcontrolador con Wi-Fi y Bluetooth integrado. Permite la conexión
-          inalámbrica de los sensores a la red.
-        </p>
-        <img
-          src="esp.png"
-          alt="Sensor de Corriente"
-          class="w-20 h-20 object-contain"
-        />
-      </div>
-      <!-- Card 3 -->
-      <div
-        class="bg-white rounded-xl shadow-md px-6 py-8 flex flex-col items-center"
-      >
-        <span class="text-xl font-bold text-gray-800 mb-2"
-          >Sensor de Luz LDR
-        </span>
-        <p class="text-sm text-gray-600 mb-4 text-center">
-          Varía su resistencia según la cantidad de luz. Se usa para medir
-          niveles de luminosidad y activar luces automáticamente.
-        </p>
-        <img
-          src="ldr.png"
-          alt="Sensor de Voltaje"
-          class="w-20 h-20 object-contain"
-        />
+
+      <!-- Cards de características mejoradas -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Card 1 - Monitoreo -->
+        <div
+          class="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-gray-100 overflow-hidden"
+        >
+          <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500"
+          ></div>
+          <div
+            class="absolute top-4 right-4 w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+          >
+            <svg
+              class="w-6 h-6 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">
+            Monitoreo en Tiempo Real
+          </h3>
+          <p class="text-gray-600 mb-6 leading-relaxed">
+            Observa el consumo eléctrico de tu hogar en tiempo real con gráficos
+            interactivos y alertas inteligentes.
+          </p>
+          <div
+            class="flex items-center text-blue-600 font-semibold group-hover:gap-3 gap-2 transition-all"
+          >
+            <span>Ver más</span>
+            <svg
+              class="w-4 h-4 transform group-hover:translate-x-1 transition-transform"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              ></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Card 2 - Alertas -->
+        <div
+          class="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-gray-100 overflow-hidden"
+        >
+          <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-orange-500"
+          ></div>
+          <div
+            class="absolute top-4 right-4 w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+          >
+            <svg
+              class="w-6 h-6 text-yellow-600"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">
+            Alertas Inteligentes
+          </h3>
+          <p class="text-gray-600 mb-6 leading-relaxed">
+            Recibe notificaciones automáticas cuando detectemos consumos
+            anómalos o picos de energía inesperados.
+          </p>
+          <div
+            class="flex items-center text-yellow-600 font-semibold group-hover:gap-3 gap-2 transition-all"
+          >
+            <span>Ver más</span>
+            <svg
+              class="w-4 h-4 transform group-hover:translate-x-1 transition-transform"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              ></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Card 3 - Análisis -->
+        <div
+          class="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-gray-100 overflow-hidden"
+        >
+          <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-500"
+          ></div>
+          <div
+            class="absolute top-4 right-4 w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+          >
+            <svg
+              class="w-6 h-6 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">
+            Análisis Detallado
+          </h3>
+          <p class="text-gray-600 mb-6 leading-relaxed">
+            Obtén reportes completos con estadísticas, tendencias y
+            recomendaciones personalizadas para optimizar tu consumo.
+          </p>
+          <div
+            class="flex items-center text-green-600 font-semibold group-hover:gap-3 gap-2 transition-all"
+          >
+            <span>Ver más</span>
+            <svg
+              class="w-4 h-4 transform group-hover:translate-x-1 transition-transform"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              ></path>
+            </svg>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <!-- Card 4 -->
-      <div
-        class="bg-white rounded-xl shadow-md px-6 py-8 flex flex-col items-center"
-      >
-        <span class="text-xl font-bold text-gray-800 mb-2"
-          >Sensor de Movimiento PIR</span
+  </div>
+  <!-- Sección de Sensores Rediseñada -->
+  <div class="relative py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header de sensores -->
+      <div class="text-center mb-16">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-semibold mb-6"
         >
-        <p class="text-sm text-gray-600 mb-4 text-center">
-          Detecta movimiento mediante cambios en la radiación infrarroja. Ideal
-          para alarmas y sistemas de iluminación automática.
+          <span class="text-lg">🔬</span>
+          Tecnología IoT
+        </div>
+        <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          Sensores que hacen funcionar a
+          <span
+            class="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent"
+          >
+            Voltio
+          </span>
+        </h2>
+        <p class="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+          Los sensores de Voltio monitorean el consumo en tiempo real,
+          proporcionando datos detallados sobre el uso de la corriente eléctrica
+          en tu hogar. Estos datos te ayudan a identificar patrones de consumo,
+          optimizar el uso de energía y reducir costos.
         </p>
-        <img
-          src="pri.png"
-          alt="Sensor de Temperatura"
-          class="w-20 h-20 object-contain"
-        />
       </div>
-      <!-- Card 5 -->
-      <div
-        class="bg-white rounded-xl shadow-md px-6 py-8 flex flex-col items-center"
-      >
-        <span class="text-xl font-bold text-gray-800 mb-2"
-          >Sensor de Humedad y Temperatura DHT22</span
+
+      <!-- Grid de sensores mejorado -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Sensor 1 - Raspberry PI -->
+        <div
+          class="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-gray-100 relative overflow-hidden"
         >
-        <p class="text-sm text-gray-600 mb-4 text-center">
-          Mide temperatura y humedad con buena precisión. Común en estaciones
-          meteorológicas y control ambiental.
-        </p>
-        <img
-          src="dht.png"
-          alt="Sensor de Humedad"
-          class="w-20 h-20 object-contain"
-        />
+          <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500"
+          ></div>
+          <div class="flex flex-col items-center text-center">
+            <div
+              class="w-24 h-24 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300"
+            >
+              <img
+                src="rasp.png"
+                alt="Raspberry PI 4"
+                class="w-16 h-16 object-contain"
+              />
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">Raspberry PI 4</h3>
+            <div class="w-12 h-1 bg-purple-500 rounded-full mb-4"></div>
+            <p class="text-gray-600 leading-relaxed mb-6">
+              Actúa como el cerebro del sistema, gestionando la comunicación
+              entre los sensores y la aplicación con procesamiento en tiempo
+              real.
+            </p>
+            <div class="flex items-center gap-2 text-purple-600 font-semibold">
+              <span
+                class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"
+              ></span>
+              <span class="text-sm">Procesador Principal</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensor 2 - ESP32 -->
+        <div
+          class="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-gray-100 relative overflow-hidden"
+        >
+          <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500"
+          ></div>
+          <div class="flex flex-col items-center text-center">
+            <div
+              class="w-24 h-24 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300"
+            >
+              <img src="esp.png" alt="ESP32" class="w-16 h-16 object-contain" />
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">ESP32</h3>
+            <div class="w-12 h-1 bg-blue-500 rounded-full mb-4"></div>
+            <p class="text-gray-600 leading-relaxed mb-6">
+              Microcontrolador con Wi-Fi y Bluetooth integrado. Permite la
+              conexión inalámbrica de los sensores a la red con conectividad
+              dual.
+            </p>
+            <div class="flex items-center gap-2 text-blue-600 font-semibold">
+              <span
+                class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"
+              ></span>
+              <span class="text-sm">Conectividad IoT</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensor 3 - LDR -->
+        <div
+          class="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-gray-100 relative overflow-hidden"
+        >
+          <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-orange-500"
+          ></div>
+          <div class="flex flex-col items-center text-center">
+            <div
+              class="w-24 h-24 bg-yellow-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300"
+            >
+              <img
+                src="ldr.png"
+                alt="Sensor LDR"
+                class="w-16 h-16 object-contain"
+              />
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">
+              Sensor de Luz LDR
+            </h3>
+            <div class="w-12 h-1 bg-yellow-500 rounded-full mb-4"></div>
+            <p class="text-gray-600 leading-relaxed mb-6">
+              Varía su resistencia según la cantidad de luz. Se usa para medir
+              niveles de luminosidad y activar luces automáticamente.
+            </p>
+            <div class="flex items-center gap-2 text-yellow-600 font-semibold">
+              <span
+                class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"
+              ></span>
+              <span class="text-sm">Detección Lumínica</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensor 4 - PIR -->
+        <div
+          class="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-gray-100 relative overflow-hidden"
+        >
+          <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-pink-500"
+          ></div>
+          <div class="flex flex-col items-center text-center">
+            <div
+              class="w-24 h-24 bg-red-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300"
+            >
+              <img
+                src="pri.png"
+                alt="Sensor PIR"
+                class="w-16 h-16 object-contain"
+              />
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">
+              Sensor de Movimiento PIR
+            </h3>
+            <div class="w-12 h-1 bg-red-500 rounded-full mb-4"></div>
+            <p class="text-gray-600 leading-relaxed mb-6">
+              Detecta movimiento mediante cambios en la radiación infrarroja.
+              Ideal para alarmas y sistemas de iluminación automática.
+            </p>
+            <div class="flex items-center gap-2 text-red-600 font-semibold">
+              <span
+                class="w-2 h-2 bg-red-500 rounded-full animate-pulse"
+              ></span>
+              <span class="text-sm">Detección de Movimiento</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensor 5 - DHT22 -->
+        <div
+          class="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-gray-100 relative overflow-hidden"
+        >
+          <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 to-cyan-500"
+          ></div>
+          <div class="flex flex-col items-center text-center">
+            <div
+              class="w-24 h-24 bg-teal-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300"
+            >
+              <img
+                src="dht.png"
+                alt="Sensor DHT22"
+                class="w-16 h-16 object-contain"
+              />
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">
+              DHT22 Temp/Humedad
+            </h3>
+            <div class="w-12 h-1 bg-teal-500 rounded-full mb-4"></div>
+            <p class="text-gray-600 leading-relaxed mb-6">
+              Mide temperatura y humedad con buena precisión. Común en
+              estaciones meteorológicas y control ambiental inteligente.
+            </p>
+            <div class="flex items-center gap-2 text-teal-600 font-semibold">
+              <span
+                class="w-2 h-2 bg-teal-500 rounded-full animate-pulse"
+              ></span>
+              <span class="text-sm">Monitoreo Ambiental</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensor 6 - ACS712 -->
+        <div
+          class="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border border-gray-100 relative overflow-hidden"
+        >
+          <div
+            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-green-500"
+          ></div>
+          <div class="flex flex-col items-center text-center">
+            <div
+              class="w-24 h-24 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300"
+            >
+              <img
+                src="acs.png"
+                alt="Sensor ACS712"
+                class="w-16 h-16 object-contain"
+              />
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">
+              ACS712 Corriente
+            </h3>
+            <div class="w-12 h-1 bg-emerald-500 rounded-full mb-4"></div>
+            <p class="text-gray-600 leading-relaxed mb-6">
+              Mide corriente alterna y continua. Útil para monitorear consumo
+              eléctrico y protección de equipos en tiempo real.
+            </p>
+            <div class="flex items-center gap-2 text-emerald-600 font-semibold">
+              <span
+                class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"
+              ></span>
+              <span class="text-sm">Medición de Corriente</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <!-- Card 6 -->
-      <div
-        class="bg-white rounded-xl shadow-md px-6 py-8 flex flex-col items-center"
-      >
-        <span class="text-xl font-bold text-gray-800 mb-2"
-          >Sensor de Corriente ACS712</span
+
+      <!-- CTA adicional -->
+      <div class="text-center mt-16">
+        <div
+          class="inline-flex items-center gap-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-4 rounded-2xl shadow-lg"
         >
-        <p class="text-sm text-gray-600 mb-4 text-center">
-          Mide corriente alterna y continua. Útil para monitorear consumo
-          eléctrico y protección de equipos.
-        </p>
-        <img
-          src="acs.png"
-          alt="Sensor de Potencia"
-          class="w-20 h-20 object-contain"
-        />
+          <span class="text-2xl">⚡</span>
+          <span class="font-semibold"
+            >¿Listo para empezar a ahorrar energía?</span
+          >
+        </div>
       </div>
     </div>
   </div>

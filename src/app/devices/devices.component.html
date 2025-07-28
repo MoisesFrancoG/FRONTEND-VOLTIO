@@ -1,85 +1,642 @@
 <div
-  class="flex flex-col md:flex-row gap-8 justify-center items-start w-full p-4"
+  class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-4 md:p-8"
 >
-  <!-- Lista de dispositivos -->
-  <div class="w-full md:w-1/3">
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-      <h2 class="text-xl font-bold mb-4 text-gray-800">Mis Dispositivos</h2>
-      <button
-        (click)="showAddOptions = !showAddOptions"
-        class="w-full py-2 px-4 mb-4 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 transition"
+  <div class="max-w-7xl mx-auto">
+    <!-- Header moderno -->
+    <div class="text-center mb-8">
+      <h1
+        class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2"
       >
-        Añadir Nuevo Dispositivo
-      </button>
-      <div *ngIf="showAddOptions" class="flex flex-col gap-2 mb-4">
-        <button
-          (click)="addMode = 'bluetooth'"
-          class="w-full py-2 px-4 rounded-lg border border-green-500 text-green-600 font-semibold hover:bg-green-50"
+        ⚡ Centro de Control Voltio
+      </h1>
+      <p class="text-gray-600 text-sm md:text-base">
+        Gestiona y monitorea todos tus dispositivos IoT desde un solo lugar
+      </p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
+      <!-- Panel de dispositivos - Rediseñado -->
+      <div class="w-full lg:w-2/5">
+        <div
+          class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden"
         >
-          Vincular por Bluetooth
-        </button>
-        <button
-          (click)="addMode = 'manual'"
-          class="w-full py-2 px-4 rounded-lg border border-gray-400 text-gray-700 font-semibold hover:bg-gray-50"
-        >
-          Añadir Manualmente
-        </button>
-      </div>
-      <div *ngIf="loading" class="text-gray-500">Cargando...</div>
-      <div *ngIf="error" class="text-red-500 font-semibold mb-2">
-        {{ error }}
-      </div>
-      <ul *ngIf="devices.length" class="space-y-3">
-        <li
-          *ngFor="let device of devices"
-          class="bg-gray-50 rounded-lg p-3 flex flex-col border border-gray-200 relative"
-        >
-          <div class="flex items-center gap-2 mb-1">
-            <span
-              class="inline-block w-3 h-3 rounded-full"
-              [ngClass]="device.is_active ? 'bg-green-500' : 'bg-red-500'"
-              [title]="device.is_active ? 'Activo' : 'Inactivo'"
-            ></span>
-            <span class="font-semibold text-gray-800 text-base">{{
-              device.name
-            }}</span>
-          </div>
-          <span class="text-xs text-gray-500 mb-1">{{
-            device.mac_address
-          }}</span>
-          <span class="text-xs text-green-600 mb-1">{{
-            device.device_type_name
-          }}</span>
-          <span
-            *ngIf="device.description"
-            class="text-xs text-gray-700 italic"
-            >{{ device.description }}</span
+          <!-- Header del panel -->
+          <div
+            class="bg-gradient-to-r from-green-500 to-emerald-500 p-6 text-white"
           >
-        </li>
-      </ul>
-      <div *ngIf="!devices.length && !loading" class="text-gray-400 mt-2">
-        No tienes dispositivos registrados.
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                  <span class="text-2xl">📱</span>
+                  Mis Dispositivos
+                </h2>
+                <p class="text-green-100 text-sm mt-1">
+                  {{ devices.length }} dispositivo{{
+                    devices.length !== 1 ? "s" : ""
+                  }}
+                  registrado{{ devices.length !== 1 ? "s" : "" }}
+                </p>
+              </div>
+              <div class="bg-white/20 rounded-full p-2">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
+                  ></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6">
+            <!-- Botón principal mejorado -->
+            <button
+              (click)="showAddOptions = !showAddOptions"
+              class="group w-full py-4 px-6 mb-6 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold hover:from-green-600 hover:to-emerald-600 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl relative overflow-hidden"
+            >
+              <div
+                class="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
+              ></div>
+              <div class="relative flex items-center justify-center gap-3">
+                <span class="text-lg">{{ showAddOptions ? "✖️" : "➕" }}</span>
+                <span>{{
+                  showAddOptions
+                    ? "Cerrar Opciones"
+                    : "Añadir Nuevo Dispositivo"
+                }}</span>
+              </div>
+            </button>
+
+            <!-- Opciones expandibles rediseñadas -->
+            <div
+              *ngIf="showAddOptions"
+              class="space-y-3 mb-6 animate-[fadeInUp_0.3s_ease-out]"
+            >
+              <button
+                (click)="addMode = 'bluetooth'"
+                class="group w-full py-4 px-6 rounded-xl border-2 border-green-200 text-green-700 font-semibold hover:border-green-400 hover:bg-green-50 transform hover:scale-[1.02] transition-all duration-200 relative overflow-hidden"
+                [class.ring-2]="addMode === 'bluetooth'"
+                [class.ring-green-400]="addMode === 'bluetooth'"
+                [class.bg-green-50]="addMode === 'bluetooth'"
+              >
+                <div class="flex items-center justify-center gap-3">
+                  <span class="text-xl">🔵</span>
+                  <span>Vincular por Bluetooth</span>
+                  <span
+                    *ngIf="addMode === 'bluetooth'"
+                    class="ml-auto text-green-500"
+                    >✓</span
+                  >
+                </div>
+              </button>
+
+              <button
+                (click)="addMode = 'manual'"
+                class="group w-full py-4 px-6 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:border-gray-400 hover:bg-gray-50 transform hover:scale-[1.02] transition-all duration-200 relative overflow-hidden"
+                [class.ring-2]="addMode === 'manual'"
+                [class.ring-gray-400]="addMode === 'manual'"
+                [class.bg-gray-50]="addMode === 'manual'"
+              >
+                <div class="flex items-center justify-center gap-3">
+                  <span class="text-xl">⚙️</span>
+                  <span>Añadir Manualmente</span>
+                  <span
+                    *ngIf="addMode === 'manual'"
+                    class="ml-auto text-gray-500"
+                    >✓</span
+                  >
+                </div>
+              </button>
+            </div>
+            <!-- Estados de carga y error mejorados -->
+            <div *ngIf="loading" class="flex flex-col items-center py-8">
+              <div class="relative">
+                <div
+                  class="w-12 h-12 border-4 border-green-200 border-t-green-500 rounded-full animate-spin"
+                ></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <span class="text-green-500">⚡</span>
+                </div>
+              </div>
+              <p class="text-gray-500 mt-3 font-medium">
+                Cargando dispositivos...
+              </p>
+            </div>
+
+            <div
+              *ngIf="error"
+              class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4"
+            >
+              <div class="flex items-center gap-3">
+                <span class="text-red-500 text-xl">⚠️</span>
+                <div>
+                  <p class="text-red-700 font-semibold">Error al cargar</p>
+                  <p class="text-red-600 text-sm">{{ error }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de dispositivos rediseñada -->
+            <div *ngIf="devices.length" class="space-y-4">
+              <div class="flex items-center justify-between mb-4">
+                <h3
+                  class="text-sm font-semibold text-gray-600 uppercase tracking-wider"
+                >
+                  Lista de Dispositivos
+                </h3>
+                <span
+                  class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium"
+                >
+                  {{ devices.length }} activo{{
+                    devices.length !== 1 ? "s" : ""
+                  }}
+                </span>
+              </div>
+
+              <div
+                *ngFor="let device of devices; let i = index"
+                class="group bg-gradient-to-r from-white to-gray-50/50 rounded-xl p-5 border border-gray-100 hover:border-green-200 hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 relative overflow-hidden"
+              >
+                <!-- Indicador de estado moderno -->
+                <div
+                  class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r"
+                  [ngClass]="
+                    device.is_active
+                      ? 'from-green-400 to-emerald-400'
+                      : 'from-red-400 to-orange-400'
+                  "
+                ></div>
+
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <!-- Header del dispositivo -->
+                    <div class="flex items-center gap-3 mb-3">
+                      <div class="relative">
+                        <div
+                          class="w-4 h-4 rounded-full shadow-lg"
+                          [ngClass]="
+                            device.is_active ? 'bg-green-500' : 'bg-red-500'
+                          "
+                        ></div>
+                        <div
+                          *ngIf="device.is_active"
+                          class="absolute inset-0 w-4 h-4 bg-green-400 rounded-full animate-ping opacity-30"
+                        ></div>
+                      </div>
+                      <h4
+                        class="font-bold text-gray-800 text-lg group-hover:text-green-600 transition-colors"
+                      >
+                        {{ device.name }}
+                      </h4>
+                      <span
+                        class="px-3 py-1 rounded-full text-xs font-semibold"
+                        [ngClass]="
+                          device.is_active
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
+                        "
+                      >
+                        {{ device.is_active ? "Online" : "Offline" }}
+                      </span>
+                    </div>
+
+                    <!-- Información del dispositivo -->
+                    <div class="space-y-2">
+                      <div class="flex items-center gap-2">
+                        <span class="text-gray-400">🔗</span>
+                        <span
+                          class="text-sm text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded"
+                        >
+                          {{ device.mac_address }}
+                        </span>
+                      </div>
+
+                      <div class="flex items-center gap-2">
+                        <span class="text-gray-400">📡</span>
+                        <span
+                          class="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded"
+                        >
+                          {{ device.device_type_name }}
+                        </span>
+                      </div>
+
+                      <div
+                        *ngIf="device.description"
+                        class="flex items-start gap-2 mt-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400"
+                      >
+                        <span class="text-blue-400 mt-0.5">💭</span>
+                        <span
+                          class="text-sm text-blue-700 italic leading-relaxed"
+                        >
+                          {{ device.description }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Acciones del dispositivo -->
+                  <div class="flex flex-col items-center gap-2 ml-4">
+                    <!-- Botón de control para dispositivos tipo 1 y 3 -->
+                    <button
+                      *ngIf="
+                        device.device_type_id === 1 ||
+                        device.device_type_id === 3
+                      "
+                      (click)="openControlModal(device)"
+                      class="p-2 rounded-lg bg-green-100 hover:bg-green-200 transition-colors group/btn"
+                      title="Controlar dispositivo"
+                    >
+                      <svg
+                        class="w-4 h-4 text-green-600 group-hover/btn:text-green-700"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        ></path>
+                      </svg>
+                    </button>
+
+                    <!-- Botón de opciones -->
+                    <button
+                      class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors group/btn"
+                    >
+                      <svg
+                        class="w-4 h-4 text-gray-500 group-hover/btn:text-gray-700"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
+                        ></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado vacío mejorado -->
+            <div *ngIf="!devices.length && !loading" class="text-center py-12">
+              <div
+                class="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center"
+              >
+                <span class="text-4xl">📱</span>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-700 mb-2">
+                No hay dispositivos registrados
+              </h3>
+              <p class="text-gray-500 text-sm mb-6">
+                Comienza agregando tu primer dispositivo IoT
+              </p>
+              <button
+                (click)="showAddOptions = true"
+                class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl hover:from-green-600 hover:to-emerald-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
+              >
+                <span>➕</span>
+                <span>Añadir Primer Dispositivo</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Panel de configuración - Rediseñado -->
+      <div class="w-full lg:w-3/5">
+        <div
+          class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden"
+        >
+          <!-- Header dinámico del panel -->
+          <div
+            class="bg-gradient-to-r p-6 text-white"
+            [ngClass]="{
+              'from-blue-500 to-indigo-500': addMode === 'bluetooth',
+              'from-gray-500 to-slate-500': addMode === 'manual',
+              'from-purple-500 to-violet-500': !addMode
+            }"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-xl font-bold flex items-center gap-3">
+                  <span class="text-2xl">
+                    {{
+                      addMode === "bluetooth"
+                        ? "🔵"
+                        : addMode === "manual"
+                        ? "⚙️"
+                        : "🚀"
+                    }}
+                  </span>
+                  <span>
+                    {{
+                      addMode === "bluetooth"
+                        ? "Vinculación Bluetooth"
+                        : addMode === "manual"
+                        ? "Registro Manual"
+                        : "Centro de Configuración"
+                    }}
+                  </span>
+                </h2>
+                <p class="text-white/80 text-sm mt-1">
+                  {{
+                    addMode === "bluetooth"
+                      ? "Conecta dispositivos IoT automáticamente"
+                      : addMode === "manual"
+                      ? "Agrega dispositivos con configuración personalizada"
+                      : "Selecciona el método de registro que prefieras"
+                  }}
+                </p>
+              </div>
+              <div class="bg-white/20 rounded-full p-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    *ngIf="addMode === 'bluetooth'"
+                    d="M10 2L8.64 3.36l2.28 2.28H6v1.44h4.92L8.64 9.36 10 10.72l4.36-4.36L10 2zM6 12.56v1.44h4.92l-2.28 2.28L10 17.28l4.36-4.36L10 8.56 8.64 9.92l2.28 2.28H6z"
+                  />
+                  <path
+                    *ngIf="addMode === 'manual'"
+                    d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+                  />
+                  <path
+                    *ngIf="!addMode"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 md:p-8">
+            <!-- Contenido dinámico -->
+            <ng-container *ngIf="addMode === 'bluetooth'">
+              <div
+                class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl"
+              >
+                <div class="flex items-start gap-3">
+                  <span class="text-blue-500 text-xl mt-1">💡</span>
+                  <div>
+                    <h4 class="font-semibold text-blue-800 mb-1">
+                      Vinculación Bluetooth
+                    </h4>
+                    <p class="text-blue-700 text-sm">
+                      Asegúrate de que tu dispositivo esté en modo de
+                      emparejamiento y cerca de tu computadora.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <app-bluetooth-register
+                (registered)="onDeviceRegistered()"
+                class="block"
+              ></app-bluetooth-register>
+            </ng-container>
+
+            <ng-container *ngIf="addMode === 'manual'">
+              <div
+                class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-xl"
+              >
+                <div class="flex items-start gap-3">
+                  <span class="text-gray-500 text-xl mt-1">⚙️</span>
+                  <div>
+                    <h4 class="font-semibold text-gray-800 mb-1">
+                      Registro Manual
+                    </h4>
+                    <p class="text-gray-700 text-sm">
+                      Ingresa los datos de tu dispositivo manualmente para una
+                      configuración personalizada.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <app-manual-register
+                (registered)="onDeviceRegistered()"
+                class="block"
+              ></app-manual-register>
+            </ng-container>
+
+            <ng-container *ngIf="!addMode">
+              <div class="text-center py-16">
+                <div
+                  class="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-3xl flex items-center justify-center"
+                >
+                  <span class="text-6xl">🚀</span>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">
+                  ¡Comienza Ahora!
+                </h3>
+                <p class="text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">
+                  Selecciona el método que prefieras para conectar tus
+                  dispositivos IoT y comenzar a monitorear tu consumo
+                  energético.
+                </p>
+
+                <!-- Cards de métodos -->
+                <div
+                  class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto"
+                >
+                  <div
+                    class="group cursor-pointer p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border-2 border-transparent hover:border-blue-300 transition-all duration-300 transform hover:scale-105"
+                    (click)="addMode = 'bluetooth'"
+                  >
+                    <div class="text-4xl mb-4">🔵</div>
+                    <h4 class="font-bold text-blue-800 mb-2">Bluetooth</h4>
+                    <p class="text-blue-600 text-sm">
+                      Conexión automática y rápida
+                    </p>
+                  </div>
+
+                  <div
+                    class="group cursor-pointer p-6 bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl border-2 border-transparent hover:border-gray-300 transition-all duration-300 transform hover:scale-105"
+                    (click)="addMode = 'manual'"
+                  >
+                    <div class="text-4xl mb-4">⚙️</div>
+                    <h4 class="font-bold text-gray-800 mb-2">Manual</h4>
+                    <p class="text-gray-600 text-sm">
+                      Configuración personalizada
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-  <!-- Formulario de vinculación -->
-  <div class="w-full md:w-2/3">
-    <div class="bg-white rounded-xl shadow-lg p-6">
-      <ng-container *ngIf="addMode === 'bluetooth'">
-        <app-bluetooth-register
-          (registered)="onDeviceRegistered()"
-        ></app-bluetooth-register>
-      </ng-container>
-      <ng-container *ngIf="addMode === 'manual'">
-        <app-manual-register
-          (registered)="onDeviceRegistered()"
-        ></app-manual-register>
-      </ng-container>
-      <ng-container *ngIf="!addMode">
-        <div class="text-gray-400 text-center">
-          Selecciona una opción para vincular o registrar un dispositivo.
+</div>
+
+<!-- Modal de Control de Dispositivo -->
+<div
+  *ngIf="showControlModal"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+  (click)="closeControlModal()"
+>
+  <div
+    class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Header del Modal -->
+    <div
+      class="bg-gradient-to-r p-6 text-white rounded-t-2xl"
+      [ngClass]="{
+        'from-green-500 to-emerald-500': selectedDevice?.device_type_id === 1,
+        'from-blue-500 to-indigo-500': selectedDevice?.device_type_id === 3
+      }"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-xl font-bold flex items-center gap-2">
+            <span class="text-2xl">
+              {{ selectedDevice?.device_type_id === 1 ? "⚡" : "📡" }}
+            </span>
+            Control de Dispositivo
+          </h3>
+          <p class="text-white/80 text-sm mt-1">
+            {{ selectedDevice?.name }}
+          </p>
         </div>
-      </ng-container>
+        <button
+          (click)="closeControlModal()"
+          class="p-2 hover:bg-white/20 rounded-lg transition-colors"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido del Modal -->
+    <div class="p-6">
+      <!-- Información del dispositivo -->
+      <div class="mb-6 p-4 bg-gray-50 rounded-xl">
+        <div class="flex items-center gap-3 mb-2">
+          <div
+            class="w-3 h-3 rounded-full"
+            [ngClass]="
+              selectedDevice?.is_active ? 'bg-green-500' : 'bg-red-500'
+            "
+          ></div>
+          <span class="font-semibold text-gray-800">{{
+            selectedDevice?.name
+          }}</span>
+        </div>
+        <div class="text-sm text-gray-600 space-y-1">
+          <div class="flex justify-between">
+            <span>MAC:</span>
+            <span class="font-mono">{{ selectedDevice?.mac_address }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Tipo:</span>
+            <span>{{ selectedDevice?.device_type_name }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controles según el tipo de dispositivo -->
+      <div class="space-y-4">
+        <!-- Controles para dispositivo tipo 1 (PZEM - Relay) -->
+        <div *ngIf="selectedDevice?.device_type_id === 1">
+          <h4 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <span class="text-green-500">🔌</span>
+            Control de Relay
+          </h4>
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              (click)="sendRelayCommand('ON')"
+              [disabled]="isLoading"
+              class="py-3 px-4 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <span class="text-lg">🟢</span>
+              <span>Encender</span>
+            </button>
+            <button
+              (click)="sendRelayCommand('OFF')"
+              [disabled]="isLoading"
+              class="py-3 px-4 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <span class="text-lg">🔴</span>
+              <span>Apagar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Controles para dispositivo tipo 3 (RPI - IR) -->
+        <div *ngIf="selectedDevice?.device_type_id === 3">
+          <h4 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <span class="text-blue-500">📡</span>
+            Control Infrarrojo
+          </h4>
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              (click)="sendIRCommand('ON')"
+              [disabled]="isLoading"
+              class="py-3 px-4 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <span class="text-lg">📶</span>
+              <span>Activar</span>
+            </button>
+            <button
+              (click)="sendIRCommand('OFF')"
+              [disabled]="isLoading"
+              class="py-3 px-4 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <span class="text-lg">📵</span>
+              <span>Desactivar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Estado de carga -->
+        <div *ngIf="isLoading" class="flex items-center justify-center py-4">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-5 h-5 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin"
+            ></div>
+            <span class="text-gray-600">Enviando comando...</span>
+          </div>
+        </div>
+
+        <!-- Mensaje de respuesta -->
+        <div
+          *ngIf="commandResponse"
+          class="p-3 rounded-xl"
+          [ngClass]="{
+            'bg-green-50 border border-green-200': commandResponse.success,
+            'bg-red-50 border border-red-200': !commandResponse.success
+          }"
+        >
+          <div class="flex items-center gap-2">
+            <span
+              [ngClass]="{
+                'text-green-500': commandResponse.success,
+                'text-red-500': !commandResponse.success
+              }"
+            >
+              {{ commandResponse.success ? "✅" : "❌" }}
+            </span>
+            <span
+              class="font-semibold"
+              [ngClass]="{
+                'text-green-800': commandResponse.success,
+                'text-red-800': !commandResponse.success
+              }"
+            >
+              {{ commandResponse.message }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones del modal -->
+      <div class="flex justify-end mt-6 pt-4 border-t border-gray-200">
+        <button
+          (click)="closeControlModal()"
+          class="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+        >
+          Cerrar
+        </button>
+      </div>
     </div>
   </div>
 </div>

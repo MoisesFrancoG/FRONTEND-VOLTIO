@@ -68,6 +68,7 @@
         *ngFor="let device of userDevices"
         class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
         (click)="selectDevice(device)"
+        [hidden]="device.device_type_id === 3"
       >
         <div class="p-6">
           <div class="flex items-center gap-3 mb-4">
@@ -142,11 +143,13 @@
     </div>
   </div>
 
-  <!-- Vista de monitoreo -->
-  <div *ngIf="currentView === 'monitoring'" class="flex h-screen">
-    <!-- Barra lateral -->
-    <aside class="w-80 bg-white shadow-lg p-6 flex flex-col gap-6">
-      <!-- Botón de regreso -->
+  <!-- Vista de selección de sensores para dispositivos tipo 2 -->
+  <div
+    *ngIf="currentView === 'sensor-selection'"
+    class="container mx-auto px-4 py-6"
+  >
+    <!-- Header -->
+    <div class="mb-6">
       <button
         (click)="backToDeviceSelection()"
         class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors mb-4"
@@ -154,6 +157,85 @@
         <span>←</span>
         <span>Volver a dispositivos</span>
       </button>
+
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">
+        🔬 Seleccionar Sensor
+      </h1>
+      <p class="text-gray-600">
+        Selecciona el sensor específico que deseas monitorear del dispositivo
+        <span class="font-semibold">{{ selectedDevice?.name }}</span>
+      </p>
+    </div>
+
+    <!-- Grid de sensores disponibles -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div
+        *ngFor="let sensor of availableSensors | keyvalue"
+        class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-300"
+        (click)="selectSensor(sensor.key)"
+      >
+        <div class="p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-4xl">{{ sensor.value.icon }}</span>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">
+                {{ sensor.value.name }}
+              </h3>
+              <p class="text-sm text-gray-600">
+                {{ sensor.value.description }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Variables del sensor -->
+          <div class="mb-4">
+            <p class="text-xs text-gray-600 mb-2">Variables monitoreadas:</p>
+            <div class="flex flex-wrap gap-1">
+              <span
+                *ngFor="let variable of sensor.value.variables"
+                class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded"
+              >
+                {{ variable }}
+              </span>
+            </div>
+          </div>
+
+          <button
+            class="w-full py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+          >
+            Monitorear {{ sensor.value.name }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista de monitoreo -->
+  <div *ngIf="currentView === 'monitoring'" class="flex h-screen">
+    <!-- Barra lateral -->
+    <aside class="w-80 bg-white shadow-lg p-6 flex flex-col gap-6">
+      <!-- Botones de regreso -->
+      <div class="flex flex-col gap-2">
+        <!-- Regreso a selección de sensores (solo para tipo 2) -->
+        <button
+          *ngIf="selectedDevice?.device_type_id === 2"
+          (click)="backToSensorSelection()"
+          class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          <span>←</span>
+          <span>Volver a sensores</span>
+        </button>
+
+        <!-- Regreso a dispositivos -->
+        <button
+          (click)="backToDeviceSelection()"
+          class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+          [class.mb-4]="selectedDevice?.device_type_id !== 2"
+        >
+          <span>←</span>
+          <span>Volver a dispositivos</span>
+        </button>
+      </div>
 
       <!-- Información del dispositivo -->
       <div class="bg-gray-50 rounded-lg p-4 border" *ngIf="selectedDevice">
@@ -167,6 +249,13 @@
             </h3>
             <p class="text-xs text-gray-600">
               Tipo ID: {{ selectedDevice.device_type_id }}
+            </p>
+            <!-- Mostrar sensor seleccionado para tipo 2 -->
+            <p
+              *ngIf="selectedDevice.device_type_id === 2 && selectedSensor"
+              class="text-xs text-blue-600 font-semibold"
+            >
+              Sensor: {{ getSensorName(selectedSensor) }}
             </p>
           </div>
         </div>
@@ -201,45 +290,58 @@
         </button>
       </div>
 
-      <!-- Navegación de gráficas -->
+      <!-- Información del sensor para tipo 2 -->
+      <div
+        class="border-t pt-4"
+        *ngIf="selectedDevice?.device_type_id === 2 && selectedSensor"
+      >
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">
+          Información del Sensor
+        </h3>
+
+        <div class="bg-gray-50 rounded-lg p-4 border">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-2xl">{{ getSensorIcon(selectedSensor) }}</span>
+            <div>
+              <h4 class="font-semibold text-gray-800">
+                {{ getSensorName(selectedSensor) }}
+              </h4>
+              <p class="text-xs text-gray-600">
+                {{ getSensorDescription(selectedSensor) }}
+              </p>
+            </div>
+          </div>
+
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-600">Variables:</span>
+              <span class="font-medium text-gray-800">
+                {{ getSensorVariables(selectedSensor) }}
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">WebSocket Topic:</span>
+              <span class="font-mono text-xs text-blue-600">{{
+                selectedSensor
+              }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información adicional para tipo 1 -->
       <div class="border-t pt-4" *ngIf="selectedDevice?.device_type_id === 1">
         <h3 class="text-sm font-semibold text-gray-700 mb-3">
-          Gráficas Disponibles
+          Monitor Eléctrico
         </h3>
-        <div class="space-y-2">
-          <button
-            (click)="setChart('main')"
-            [class]="
-              selectedChart === 'main'
-                ? 'bg-blue-100 border-blue-300 text-blue-700'
-                : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'
-            "
-            class="w-full py-2 px-3 border rounded text-sm text-left transition"
-          >
-            📊 Voltaje y Corriente
-          </button>
-          <button
-            (click)="setChart('power')"
-            [class]="
-              selectedChart === 'power'
-                ? 'bg-blue-100 border-blue-300 text-blue-700'
-                : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'
-            "
-            class="w-full py-2 px-3 border rounded text-sm text-left transition"
-          >
-            ⚡ Potencia
-          </button>
-          <button
-            (click)="setChart('energy')"
-            [class]="
-              selectedChart === 'energy'
-                ? 'bg-blue-100 border-blue-300 text-blue-700'
-                : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300'
-            "
-            class="w-full py-2 px-3 border rounded text-sm text-left transition"
-          >
-            🔋 Energía
-          </button>
+        <div class="bg-gray-50 rounded-lg p-4 border">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-2xl">⚡</span>
+            <div>
+              <h4 class="font-semibold text-gray-800">PZEM-004T</h4>
+              <p class="text-xs text-gray-600">Monitor de energía eléctrica</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -248,120 +350,490 @@
         <h3 class="text-sm font-semibold text-gray-700 mb-3">
           Valores Actuales
         </h3>
-        <div class="space-y-2 text-sm">
-          <div
-            class="flex justify-between"
-            *ngIf="selectedDevice?.device_type_id === 1"
-          >
-            <span class="text-gray-600">Voltaje:</span>
-            <span class="font-mono"
-              >{{
-                voltageData.length > 0
-                  ? (voltageData[voltageData.length - 1] | number : "1.2-2")
-                  : "0.00"
-              }}
-              V</span
-            >
+
+        <!-- Métricas para NODO_CONTROL_PZEM (tipo 1) - DELEGADO A PzemMonitoringComponent -->
+        <div
+          class="space-y-2 text-sm"
+          *ngIf="selectedDevice?.device_type_id === 1"
+        >
+          <div class="bg-blue-50 rounded-lg p-3 border border-blue-200">
+            <div class="text-center">
+              <div class="text-blue-600 font-semibold">
+                ⚡ Monitor Eléctrico
+              </div>
+              <div class="text-xs text-gray-600 mt-1">
+                Los datos se muestran en el panel principal
+              </div>
+            </div>
           </div>
-          <div
-            class="flex justify-between"
-            *ngIf="selectedDevice?.device_type_id === 1"
-          >
-            <span class="text-gray-600">Corriente:</span>
-            <span class="font-mono"
-              >{{
-                currentData.length > 0
-                  ? (currentData[currentData.length - 1] | number : "1.2-2")
-                  : "0.00"
-              }}
-              A</span
-            >
+        </div>
+
+        <!-- Métricas para NODO_CONTROL_IR (tipo 2) -->
+        <div class="space-y-3" *ngIf="selectedDevice?.device_type_id === 2">
+          <!-- Temperatura -->
+          <div class="bg-red-50 rounded-lg p-3 border border-red-200">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-gray-600 text-sm flex items-center gap-1">
+                🌡️ Temperatura
+              </span>
+              <span
+                [class]="getTemperatureColor(lastSensorValues.temperature)"
+                class="font-bold text-lg"
+              >
+                {{ lastSensorValues.temperature | number : "1.1-1" }}°C
+              </span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div
+                class="bg-red-500 h-2 rounded-full transition-all duration-500"
+                [style.width.%]="
+                  lastSensorValues.temperature > 0
+                    ? (lastSensorValues.temperature / 50) * 100
+                    : 0
+                "
+              ></div>
+            </div>
           </div>
-          <div
-            class="flex justify-between"
-            *ngIf="selectedDevice?.device_type_id === 1"
-          >
-            <span class="text-gray-600">Potencia:</span>
-            <span class="font-mono"
-              >{{
-                powerData.length > 0
-                  ? (powerData[powerData.length - 1] | number : "1.2-2")
-                  : "0.00"
-              }}
-              W</span
-            >
+
+          <!-- Humedad -->
+          <div class="bg-blue-50 rounded-lg p-3 border border-blue-200">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-gray-600 text-sm flex items-center gap-1">
+                💧 Humedad
+              </span>
+              <span
+                [class]="getHumidityColor(lastSensorValues.humidity)"
+                class="font-bold text-lg"
+              >
+                {{ lastSensorValues.humidity | number : "1.1-1" }}%
+              </span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div
+                class="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                [style.width.%]="lastSensorValues.humidity"
+              ></div>
+            </div>
           </div>
+
+          <!-- Luz -->
+          <div class="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-gray-600 text-sm flex items-center gap-1">
+                💡 Luminosidad
+              </span>
+              <span
+                [class]="getLightColor(lastSensorValues.light)"
+                class="font-bold text-lg"
+              >
+                {{ lastSensorValues.light | number : "1.0-0" }} lux
+              </span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div
+                class="bg-yellow-500 h-2 rounded-full transition-all duration-500"
+                [style.width.%]="getLightPercentage(lastSensorValues.light)"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Movimiento -->
           <div
-            class="flex justify-between"
-            *ngIf="selectedDevice?.device_type_id === 1"
+            class="rounded-lg p-3 border transition-all duration-300"
+            [class.bg-red-50]="lastSensorValues.motion"
+            [class.border-red-200]="lastSensorValues.motion"
+            [class.bg-green-50]="!lastSensorValues.motion"
+            [class.border-green-200]="!lastSensorValues.motion"
           >
-            <span class="text-gray-600">Energía:</span>
-            <span class="font-mono"
-              >{{
-                energyData.length > 0
-                  ? (energyData[energyData.length - 1] | number : "1.2-2")
-                  : "0.00"
-              }}
-              kWh</span
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-gray-600 text-sm flex items-center gap-1">
+                🚶 Movimiento
+              </span>
+              <span [class]="getMotionColor()" class="font-bold text-sm">
+                {{ getMotionStatus() }}
+              </span>
+            </div>
+            <div
+              *ngIf="lastSensorValues.motion && lastSensorValues.lastMotionTime"
+              class="text-xs text-gray-500 mt-1"
             >
+              Último: {{ lastSensorValues.lastMotionTime }}
+            </div>
+          </div>
+
+          <!-- Resumen de eventos de movimiento -->
+          <div
+            *ngIf="motionEvents.length > 0"
+            class="bg-purple-50 rounded-lg p-3 border border-purple-200"
+          >
+            <span class="text-gray-600 text-sm flex items-center gap-1 mb-2">
+              📊 Eventos recientes
+            </span>
+            <div class="text-xs text-purple-700">
+              {{ motionEvents.length }} detecciones en la sesión
+            </div>
           </div>
         </div>
       </div>
     </aside>
 
-    <!-- Área principal de gráficas -->
+    <!-- Área principal de tarjetas de datos -->
     <main class="flex-1 p-6 bg-gray-50">
-      <div class="bg-white rounded-lg shadow-lg h-full p-6">
+      <div class="h-full">
         <!-- Estado de conexión -->
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-xl font-semibold text-gray-800">
-            Monitoreo en Tiempo Real - {{ selectedDevice?.name }}
-          </h2>
-          <div class="flex items-center gap-2">
-            <div
-              class="w-3 h-3 rounded-full"
-              [class.bg-green-500]="isWebSocketConnected"
-              [class.bg-red-500]="!isWebSocketConnected"
-            ></div>
-            <span class="text-sm text-gray-600">
-              {{ isWebSocketConnected ? "Conectado" : "Desconectado" }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Gráfica principal -->
-        <div class="h-96" *ngIf="selectedDevice?.device_type_id === 1">
-          <!-- Gráfica de Voltaje y Corriente -->
-          <div *ngIf="selectedChart === 'main'">
-            <div echarts [options]="chartOption" class="h-full"></div>
-          </div>
-
-          <!-- Gráfica de Potencia -->
-          <div *ngIf="selectedChart === 'power'">
-            <div echarts [options]="powerChartOption" class="h-full"></div>
-          </div>
-
-          <!-- Gráfica de Energía -->
-          <div *ngIf="selectedChart === 'energy'">
-            <div echarts [options]="energyChartOption" class="h-full"></div>
-          </div>
-        </div>
-
-        <!-- Mensaje para otros tipos de dispositivos -->
-        <div
-          *ngIf="selectedDevice?.device_type_id !== 1"
-          class="h-96 flex items-center justify-center"
-        >
-          <div class="text-center">
-            <div class="text-6xl mb-4">🚧</div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-2">
-              En Desarrollo
-            </h3>
-            <p class="text-gray-600">
-              Las gráficas para dispositivos tipo
-              {{ selectedDevice?.device_type_id }} están en desarrollo.
+        <div class="mb-6 flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-800">
+              {{ selectedDevice?.name }}
+            </h2>
+            <p
+              class="text-gray-600"
+              *ngIf="selectedDevice?.device_type_id === 2 && selectedSensor"
+            >
+              Monitoreando: {{ getSensorName(selectedSensor) }}
             </p>
           </div>
+          <div class="flex items-center gap-3">
+            <div
+              class="flex items-center gap-2 px-3 py-2 rounded-lg"
+              [class.bg-green-100]="isWebSocketConnected"
+              [class.bg-red-100]="!isWebSocketConnected"
+            >
+              <div
+                class="w-3 h-3 rounded-full animate-pulse"
+                [class.bg-green-500]="isWebSocketConnected"
+                [class.bg-red-500]="!isWebSocketConnected"
+              ></div>
+              <span
+                class="text-sm font-medium"
+                [class.text-green-700]="isWebSocketConnected"
+                [class.text-red-700]="!isWebSocketConnected"
+              >
+                {{ isWebSocketConnected ? "Conectado" : "Desconectado" }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarjetas de datos en tiempo real para dispositivos tipo 2 -->
+        <div *ngIf="selectedDevice?.device_type_id === 2" class="space-y-6">
+          <!-- Tarjeta DHT22 - Temperatura y Humedad -->
+          <div
+            *ngIf="selectedSensor === 'dht22'"
+            class="grid grid-cols-1 lg:grid-cols-2 gap-6"
+          >
+            <!-- Temperatura -->
+            <div
+              class="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl shadow-lg p-6 border border-red-200"
+            >
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                  <div class="p-3 bg-red-500 rounded-lg text-white text-2xl">
+                    🌡️
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-semibold text-gray-800">
+                      Temperatura
+                    </h3>
+                    <p class="text-sm text-gray-600">Sensor DHT22</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div
+                    class="text-3xl font-bold"
+                    [class]="getTemperatureColor(lastSensorValues.temperature)"
+                  >
+                    {{ lastSensorValues.temperature | number : "1.1-1" }}°C
+                  </div>
+                  <div class="text-sm text-gray-500">
+                    {{ getCurrentTime() }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Barra de progreso -->
+              <div class="mb-4">
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>0°C</span>
+                  <span>Actual</span>
+                  <span>50°C</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                  <div
+                    class="bg-gradient-to-r from-blue-400 via-green-400 to-red-500 h-3 rounded-full transition-all duration-700 ease-out"
+                    [style.width.%]="
+                      getTemperaturePercentage(lastSensorValues.temperature)
+                    "
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Estadísticas adicionales -->
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="bg-white bg-opacity-50 rounded-lg p-3">
+                  <div class="text-gray-600">Estado</div>
+                  <div
+                    class="font-semibold"
+                    [class]="getTemperatureColor(lastSensorValues.temperature)"
+                  >
+                    {{ getTemperatureStatus(lastSensorValues.temperature) }}
+                  </div>
+                </div>
+                <div class="bg-white bg-opacity-50 rounded-lg p-3">
+                  <div class="text-gray-600">Última actualización</div>
+                  <div class="font-semibold text-gray-800">Ahora</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Humedad -->
+            <div
+              class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl shadow-lg p-6 border border-blue-200"
+            >
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                  <div class="p-3 bg-blue-500 rounded-lg text-white text-2xl">
+                    💧
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Humedad</h3>
+                    <p class="text-sm text-gray-600">Sensor DHT22</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div
+                    class="text-3xl font-bold"
+                    [class]="getHumidityColor(lastSensorValues.humidity)"
+                  >
+                    {{ lastSensorValues.humidity | number : "1.1-1" }}%
+                  </div>
+                  <div class="text-sm text-gray-500">
+                    {{ getCurrentTime() }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Barra de progreso -->
+              <div class="mb-4">
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>0%</span>
+                  <span>Actual</span>
+                  <span>100%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                  <div
+                    class="bg-gradient-to-r from-yellow-400 via-blue-400 to-blue-600 h-3 rounded-full transition-all duration-700 ease-out"
+                    [style.width.%]="lastSensorValues.humidity"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Estadísticas adicionales -->
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="bg-white bg-opacity-50 rounded-lg p-3">
+                  <div class="text-gray-600">Estado</div>
+                  <div
+                    class="font-semibold"
+                    [class]="getHumidityColor(lastSensorValues.humidity)"
+                  >
+                    {{ getHumidityStatus(lastSensorValues.humidity) }}
+                  </div>
+                </div>
+                <div class="bg-white bg-opacity-50 rounded-lg p-3">
+                  <div class="text-gray-600">Confort</div>
+                  <div class="font-semibold text-gray-800">
+                    {{
+                      getComfortLevel(
+                        lastSensorValues.temperature,
+                        lastSensorValues.humidity
+                      )
+                    }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tarjeta Sensor de Luz -->
+          <div
+            *ngIf="selectedSensor === 'light_sensor'"
+            class="max-w-2xl mx-auto"
+          >
+            <div
+              class="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl shadow-lg p-6 border border-yellow-200"
+            >
+              <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                  <div class="p-3 bg-yellow-500 rounded-lg text-white text-3xl">
+                    💡
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-semibold text-gray-800">
+                      Luminosidad
+                    </h3>
+                    <p class="text-sm text-gray-600">Sensor LDR</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div
+                    class="text-4xl font-bold"
+                    [class]="getLightColor(lastSensorValues.light)"
+                  >
+                    {{ lastSensorValues.light | number : "1.0-0" }}
+                  </div>
+                  <div class="text-lg font-medium text-gray-600">lux</div>
+                  <div class="text-sm text-gray-500">
+                    {{ getCurrentTime() }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Indicador visual de luz -->
+              <div class="mb-6">
+                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                  <span>Oscuro</span>
+                  <span>{{ getLightDescription(lastSensorValues.light) }}</span>
+                  <span>Muy brillante</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-4">
+                  <div
+                    class="bg-gradient-to-r from-gray-600 via-yellow-400 to-yellow-200 h-4 rounded-full transition-all duration-700 ease-out relative"
+                    [style.width.%]="getLightPercentage(lastSensorValues.light)"
+                  >
+                    <div
+                      class="absolute right-0 top-0 w-3 h-4 bg-white rounded-full shadow-lg transform translate-x-1"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Estadísticas de luz -->
+              <div class="grid grid-cols-3 gap-4 text-sm">
+                <div class="bg-white bg-opacity-50 rounded-lg p-3 text-center">
+                  <div class="text-gray-600">Estado</div>
+                  <div
+                    class="font-semibold"
+                    [class]="getLightColor(lastSensorValues.light)"
+                  >
+                    {{ getLightStatus(lastSensorValues.light) }}
+                  </div>
+                </div>
+                <div class="bg-white bg-opacity-50 rounded-lg p-3 text-center">
+                  <div class="text-gray-600">Intensidad</div>
+                  <div class="font-semibold text-gray-800">
+                    {{ getLightIntensity(lastSensorValues.light) }}%
+                  </div>
+                </div>
+                <div class="bg-white bg-opacity-50 rounded-lg p-3 text-center">
+                  <div class="text-gray-600">Ambiente</div>
+                  <div class="font-semibold text-gray-800">
+                    {{ getLightEnvironment(lastSensorValues.light) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tarjeta Sensor PIR -->
+          <div *ngIf="selectedSensor === 'pir'" class="max-w-2xl mx-auto">
+            <div
+              class="rounded-xl shadow-lg p-6 border transition-all duration-500"
+              [class.bg-gradient-to-br]="true"
+              [class.from-red-50]="lastSensorValues.motion"
+              [class.to-pink-50]="lastSensorValues.motion"
+              [class.border-red-200]="lastSensorValues.motion"
+              [class.from-green-50]="!lastSensorValues.motion"
+              [class.to-emerald-50]="!lastSensorValues.motion"
+              [class.border-green-200]="!lastSensorValues.motion"
+            >
+              <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="p-3 rounded-lg text-white text-3xl transition-all duration-300"
+                    [class.bg-red-500]="lastSensorValues.motion"
+                    [class.bg-green-500]="!lastSensorValues.motion"
+                    [class.animate-pulse]="lastSensorValues.motion"
+                  >
+                    {{ lastSensorValues.motion ? "🚨" : "�" }}
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-semibold text-gray-800">
+                      Detector de Movimiento
+                    </h3>
+                    <p class="text-sm text-gray-600">Sensor PIR</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-2xl font-bold" [class]="getMotionColor()">
+                    {{ getMotionStatus() }}
+                  </div>
+                  <div class="text-sm text-gray-500">
+                    {{ getCurrentTime() }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Estado visual del movimiento -->
+              <div class="mb-6">
+                <div
+                  class="w-full h-20 rounded-lg border-2 border-dashed transition-all duration-300 flex items-center justify-center"
+                  [class.border-red-300]="lastSensorValues.motion"
+                  [class.bg-red-100]="lastSensorValues.motion"
+                  [class.border-green-300]="!lastSensorValues.motion"
+                  [class.bg-green-100]="!lastSensorValues.motion"
+                >
+                  <div
+                    class="text-4xl transition-all duration-300"
+                    [class.animate-bounce]="lastSensorValues.motion"
+                  >
+                    {{ lastSensorValues.motion ? "👤" : "🏠" }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Estadísticas de movimiento -->
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="bg-white bg-opacity-50 rounded-lg p-3">
+                  <div class="text-gray-600">Estado actual</div>
+                  <div class="font-semibold" [class]="getMotionColor()">
+                    {{
+                      lastSensorValues.motion ? "DETECTADO" : "SIN MOVIMIENTO"
+                    }}
+                  </div>
+                </div>
+                <div class="bg-white bg-opacity-50 rounded-lg p-3">
+                  <div class="text-gray-600">Última detección</div>
+                  <div class="font-semibold text-gray-800">
+                    {{ lastSensorValues.lastMotionTime || "Nunca" }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Historial de eventos -->
+              <div *ngIf="motionEvents.length > 0" class="mt-4">
+                <div class="text-sm text-gray-600 mb-2">Eventos recientes:</div>
+                <div
+                  class="bg-white bg-opacity-50 rounded-lg p-3 max-h-24 overflow-y-auto"
+                >
+                  <div
+                    *ngFor="let event of motionEvents.slice(-5)"
+                    class="text-xs text-gray-700 mb-1"
+                  >
+                    🕐 {{ event.time }} - Movimiento detectado
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Componente especializado para dispositivos tipo 1 (PZEM) -->
+        <div *ngIf="selectedDevice?.device_type_id === 1" class="h-full">
+          <app-pzem-monitoring
+            [selectedDevice]="selectedDevice"
+            [isWebSocketConnected]="isWebSocketConnected"
+          >
+          </app-pzem-monitoring>
         </div>
 
         <!-- Estado sin datos -->
@@ -374,9 +846,21 @@
             <h3 class="text-xl font-semibold text-gray-800 mb-2">
               Esperando datos...
             </h3>
-            <p class="text-gray-600">
+            <p class="text-gray-600 mb-4">
               Conecta el WebSocket para comenzar a recibir datos en tiempo real.
             </p>
+            <div class="text-sm text-gray-500">
+              <p>
+                Dispositivo:
+                <span class="font-semibold">{{ selectedDevice?.name }}</span>
+              </p>
+              <p>
+                Sensor:
+                <span class="font-semibold">{{
+                  getSensorName(selectedSensor || "")
+                }}</span>
+              </p>
+            </div>
           </div>
         </div>
       </div>
