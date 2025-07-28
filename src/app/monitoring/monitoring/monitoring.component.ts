@@ -48,14 +48,9 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   private webSocket: WebSocket | null = null;
   isWebSocketConnected = false;
 
-  // Datos para gráficas - Sensores eléctricos (PZEM)
+  // Datos para sensores eléctricos (PZEM) - MOVIDO A PzemMonitoringComponent
+  // Las siguientes propiedades se mantienen solo para compatibilidad con dispositivos tipo 3
   timeData: string[] = [];
-  voltageData: number[] = [];
-  currentData: number[] = [];
-  powerData: number[] = [];
-  energyData: number[] = [];
-  frequencyData: number[] = [];
-  powerFactorData: number[] = [];
 
   // Datos para sensores ambientales (DHT22, Light, PIR)
   temperatureData: number[] = [];
@@ -64,27 +59,17 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   motionData: boolean[] = [];
   motionEvents: { time: string; detected: boolean }[] = [];
 
-  // Últimos valores para mostrar en tiempo real
+  // Últimos valores para mostrar en tiempo real (solo sensores ambientales)
   lastSensorValues = {
     temperature: 0,
     humidity: 0,
     light: 0,
     motion: false,
     lastMotionTime: '',
-    voltage: 0,
-    current: 0,
-    power: 0,
-    energy: 0,
-    frequency: 0,
-    powerFactor: 0,
   };
 
-  // Configuración de gráficas
-  selectedChart: 'main' | 'power' | 'energy' | 'environmental' | 'motion' =
-    'main';
-  chartOption: EChartsOption = {};
-  powerChartOption: EChartsOption = {};
-  energyChartOption: EChartsOption = {};
+  // Configuración de gráficas (solo para sensores ambientales)
+  selectedChart: 'environmental' | 'motion' = 'environmental';
   environmentalChartOption: EChartsOption = {};
   motionChartOption: EChartsOption = {};
 
@@ -391,12 +376,7 @@ export class MonitoringComponent implements OnInit, OnDestroy {
       // Mantener solo los últimos 50 puntos de datos
       if (this.timeData.length > 50) {
         this.timeData.shift();
-        this.voltageData.shift();
-        this.currentData.shift();
-        this.powerData.shift();
-        this.energyData.shift();
-        this.frequencyData.shift();
-        this.powerFactorData.shift();
+        // Solo limpiar datos ambientales ya que PZEM está en su propio componente
         this.temperatureData.shift();
         this.humidityData.shift();
         this.lightData.shift();
@@ -405,24 +385,8 @@ export class MonitoringComponent implements OnInit, OnDestroy {
 
       // Procesar datos según el tipo de dispositivo
       if (this.selectedDevice?.device_type_id === 1) {
-        // NODO_CONTROL_PZEM - Datos eléctricos
-        const payload = messageObj.payload;
-        if (payload) {
-          this.voltageData.push(payload.voltage || 0);
-          this.currentData.push(payload.current || 0);
-          this.powerData.push(payload.power || 0);
-          this.energyData.push(payload.energy || 0);
-          this.frequencyData.push(payload.frequency || 0);
-          this.powerFactorData.push(payload.powerFactor || 0);
-
-          // Actualizar últimos valores
-          this.lastSensorValues.voltage = payload.voltage || 0;
-          this.lastSensorValues.current = payload.current || 0;
-          this.lastSensorValues.power = payload.power || 0;
-          this.lastSensorValues.energy = payload.energy || 0;
-          this.lastSensorValues.frequency = payload.frequency || 0;
-          this.lastSensorValues.powerFactor = payload.powerFactor || 0;
-        }
+        // NODO_CONTROL_PZEM - Los datos eléctricos ahora se procesan en PzemMonitoringComponent
+        console.log('📊 Datos PZEM delegados al componente especializado');
       } else if (this.selectedDevice?.device_type_id === 3) {
         // NODO_SENSADO_RPI - Sensores ambientales
         const sensorType = messageObj.sensor_type;
@@ -625,153 +589,13 @@ export class MonitoringComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Métodos de gráficas
+  // Métodos de gráficas (solo para sensores ambientales)
   initializeChartOptions(): void {
-    // Gráfica principal - Voltaje y Corriente
-    this.chartOption = {
-      title: {
-        text: 'Voltaje y Corriente en Tiempo Real',
-        left: 'center',
-        textStyle: { fontSize: 16, fontWeight: 'bold' },
-      },
-      tooltip: {
-        trigger: 'axis',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        textStyle: { color: '#fff' },
-      },
-      legend: {
-        data: ['Voltaje (V)', 'Corriente (A)'],
-        top: 30,
-      },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true,
-      },
-      xAxis: {
-        type: 'category',
-        data: this.timeData,
-        axisLabel: { rotate: 45 },
-      },
-      yAxis: [
-        {
-          type: 'value',
-          name: 'Voltaje (V)',
-          position: 'left',
-          axisLine: { lineStyle: { color: '#3b82f6' } },
-        },
-        {
-          type: 'value',
-          name: 'Corriente (A)',
-          position: 'right',
-          axisLine: { lineStyle: { color: '#ef4444' } },
-        },
-      ],
-      series: [
-        {
-          name: 'Voltaje (V)',
-          type: 'line',
-          data: this.voltageData,
-          smooth: true,
-          yAxisIndex: 0,
-          lineStyle: { color: '#3b82f6', width: 3 },
-          itemStyle: { color: '#3b82f6' },
-        },
-        {
-          name: 'Corriente (A)',
-          type: 'line',
-          data: this.currentData,
-          smooth: true,
-          yAxisIndex: 1,
-          lineStyle: { color: '#ef4444', width: 3 },
-          itemStyle: { color: '#ef4444' },
-        },
-      ],
-    };
+    // Solo inicializar gráficas ambientales, las PZEM están en su componente especializado
+    this.initializeEnvironmentalCharts();
+  }
 
-    // Gráfica de Potencia
-    this.powerChartOption = {
-      title: {
-        text: 'Potencia en Tiempo Real',
-        left: 'center',
-        textStyle: { fontSize: 16, fontWeight: 'bold' },
-      },
-      tooltip: {
-        trigger: 'axis',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        textStyle: { color: '#fff' },
-      },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true,
-      },
-      xAxis: {
-        type: 'category',
-        data: this.timeData,
-        axisLabel: { rotate: 45 },
-      },
-      yAxis: {
-        type: 'value',
-        name: 'Potencia (W)',
-        axisLine: { lineStyle: { color: '#10b981' } },
-      },
-      series: [
-        {
-          name: 'Potencia (W)',
-          type: 'line',
-          data: this.powerData,
-          smooth: true,
-          areaStyle: { color: 'rgba(16, 185, 129, 0.3)' },
-          lineStyle: { color: '#10b981', width: 3 },
-          itemStyle: { color: '#10b981' },
-        },
-      ],
-    };
-
-    // Gráfica de Energía
-    this.energyChartOption = {
-      title: {
-        text: 'Energía Acumulada',
-        left: 'center',
-        textStyle: { fontSize: 16, fontWeight: 'bold' },
-      },
-      tooltip: {
-        trigger: 'axis',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        textStyle: { color: '#fff' },
-      },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true,
-      },
-      xAxis: {
-        type: 'category',
-        data: this.timeData,
-        axisLabel: { rotate: 45 },
-      },
-      yAxis: {
-        type: 'value',
-        name: 'Energía (kWh)',
-        axisLine: { lineStyle: { color: '#8b5cf6' } },
-      },
-      series: [
-        {
-          name: 'Energía (kWh)',
-          type: 'line',
-          data: this.energyData,
-          smooth: true,
-          step: 'end',
-          lineStyle: { color: '#8b5cf6', width: 3 },
-          itemStyle: { color: '#8b5cf6' },
-        },
-      ],
-    };
-
+  private initializeEnvironmentalCharts(): void {
     // Gráfica Ambiental - Temperatura y Humedad
     this.environmentalChartOption = {
       title: {
@@ -898,78 +722,11 @@ export class MonitoringComponent implements OnInit, OnDestroy {
   }
 
   updateChartData(): void {
-    // Actualizar gráfica principal - Voltaje y Corriente
-    this.chartOption = {
-      ...this.chartOption,
-      xAxis: {
-        type: 'category',
-        data: this.timeData,
-        axisLabel: { rotate: 45 },
-      },
-      series: [
-        {
-          name: 'Voltaje (V)',
-          type: 'line',
-          data: this.voltageData,
-          smooth: true,
-          yAxisIndex: 0,
-          lineStyle: { color: '#3b82f6', width: 3 },
-          itemStyle: { color: '#3b82f6' },
-        },
-        {
-          name: 'Corriente (A)',
-          type: 'line',
-          data: this.currentData,
-          smooth: true,
-          yAxisIndex: 1,
-          lineStyle: { color: '#ef4444', width: 3 },
-          itemStyle: { color: '#ef4444' },
-        },
-      ],
-    };
+    // Solo actualizar gráficas ambientales, las PZEM están en su componente especializado
+    this.updateEnvironmentalCharts();
+  }
 
-    // Actualizar gráfica de Potencia
-    this.powerChartOption = {
-      ...this.powerChartOption,
-      xAxis: {
-        type: 'category',
-        data: this.timeData,
-        axisLabel: { rotate: 45 },
-      },
-      series: [
-        {
-          name: 'Potencia (W)',
-          type: 'line',
-          data: this.powerData,
-          smooth: true,
-          areaStyle: { color: 'rgba(16, 185, 129, 0.3)' },
-          lineStyle: { color: '#10b981', width: 3 },
-          itemStyle: { color: '#10b981' },
-        },
-      ],
-    };
-
-    // Actualizar gráfica de Energía
-    this.energyChartOption = {
-      ...this.energyChartOption,
-      xAxis: {
-        type: 'category',
-        data: this.timeData,
-        axisLabel: { rotate: 45 },
-      },
-      series: [
-        {
-          name: 'Energía (kWh)',
-          type: 'line',
-          data: this.energyData,
-          smooth: true,
-          step: 'end',
-          lineStyle: { color: '#8b5cf6', width: 3 },
-          itemStyle: { color: '#8b5cf6' },
-        },
-      ],
-    };
-
+  private updateEnvironmentalCharts(): void {
     // Actualizar gráfica Ambiental
     this.environmentalChartOption = {
       ...this.environmentalChartOption,
@@ -1031,55 +788,32 @@ export class MonitoringComponent implements OnInit, OnDestroy {
     };
   }
 
-  setChart(
-    chartType: 'main' | 'power' | 'energy' | 'environmental' | 'motion'
-  ): void {
+  setChart(chartType: 'environmental' | 'motion'): void {
     console.log('📊 Cambiando a gráfica:', chartType);
     this.selectedChart = chartType;
   }
 
   // Métodos utilitarios
   resetMonitoringData(): void {
-    // Datos eléctricos
+    // Solo datos ambientales, los eléctricos están en el componente PZEM
     this.timeData = [];
-    this.voltageData = [];
-    this.currentData = [];
-    this.powerData = [];
-    this.energyData = [];
-    this.frequencyData = [];
-    this.powerFactorData = [];
-
-    // Datos ambientales
     this.temperatureData = [];
     this.humidityData = [];
     this.lightData = [];
     this.motionData = [];
     this.motionEvents = [];
 
-    // Últimos valores
+    // Últimos valores (solo ambientales)
     this.lastSensorValues = {
       temperature: 0,
       humidity: 0,
       light: 0,
       motion: false,
       lastMotionTime: '',
-      voltage: 0,
-      current: 0,
-      power: 0,
-      energy: 0,
-      frequency: 0,
-      powerFactor: 0,
     };
 
-    // Seleccionar gráfica por defecto según el tipo de dispositivo
-    if (this.selectedDevice?.device_type_id === 2) {
-      this.selectedChart = 'environmental'; // NODO_CONTROL_IR con sensores
-    } else if (this.selectedDevice?.device_type_id === 3) {
-      this.selectedChart = 'environmental'; // NODO_SENSADO_RPI
-    } else {
-      this.selectedChart = 'main'; // NODO_CONTROL_PZEM por defecto
-    }
-
+    // Seleccionar gráfica por defecto para sensores ambientales
+    this.selectedChart = 'environmental';
     this.updateChartData();
   }
 
@@ -1140,23 +874,24 @@ export class MonitoringComponent implements OnInit, OnDestroy {
     if (!this.selectedDevice) return [];
 
     switch (this.selectedDevice.device_type_id) {
-      case 1: // NODO_CONTROL_PZEM
-        return ['main', 'power', 'energy'];
+      case 1: // NODO_CONTROL_PZEM - Las gráficas están en el componente especializado
+        return []; // No hay gráficas en este componente para PZEM
       case 2: // NODO_CONTROL_IR - Sensores individuales
         return ['environmental', 'motion'];
       case 3: // NODO_SENSADO_RPI
         return ['environmental'];
       default:
-        return ['main'];
+        return ['environmental'];
     }
   }
 
   // Método para obtener el nombre legible de la gráfica
   getChartName(chartType: string): string {
     const chartNames: { [key: string]: string } = {
-      main: 'Voltaje y Corriente',
+      'voltage-current': 'Voltaje y Corriente',
       power: 'Potencia',
       energy: 'Energía',
+      'frequency-pf': 'Frecuencia y Factor de Potencia',
       environmental: 'Ambiente',
       motion: 'Movimiento',
     };

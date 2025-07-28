@@ -4,9 +4,10 @@ import { MonitoringRoutingModule } from './monitoring-routing.module';
 import { NgxEchartsModule } from 'ngx-echarts';
 import { BluetoothModule } from '../bluetooth/bluetooth.module';
 import { MonitoringComponent } from './monitoring/monitoring.component';
+import { PzemMonitoringComponent } from './pzem-monitoring/pzem-monitoring.component';
 
 @NgModule({
-  declarations: [MonitoringComponent],
+  declarations: [MonitoringComponent, PzemMonitoringComponent],
   imports: [
     CommonModule,
     MonitoringRoutingModule,
