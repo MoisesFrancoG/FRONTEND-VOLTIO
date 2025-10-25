@@ -1,0 +1,18 @@
+.manual-form {
+  margin: 1rem 0;
+}
+.manual-form label {
+  display: block;
+  margin-top: 0.5rem;
+}
+.manual-form input {
+  width: 100%;
+  padding: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+.error {
+  color: red;
+}
+.success {
+  color: green;
+}

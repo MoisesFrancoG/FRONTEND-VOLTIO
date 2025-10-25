@@ -1,0 +1,15 @@
+.bluetooth-register {
+  margin: 1rem 0;
+}
+.bluetooth-register label {
+  display: block;
+  margin-top: 0.5rem;
+}
+.bluetooth-register input {
+  width: 100%;
+  padding: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+.error {
+  color: red;
+}

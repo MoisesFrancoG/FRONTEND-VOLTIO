@@ -1,0 +1,62 @@
+<nav
+  class="px-8 py-1 flex justify-between items-center shadow-md border-b-2 border-green-400"
+  style="background-color: rgb(240, 255, 240)"
+>
+  <div class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+    <a routerLink="/"><img src="voltio.jpg" alt="" width="80px" /></a>
+  </div>
+  <div class="flex gap-6">
+    <!-- Enlaces para usuarios no autenticados -->
+    <div *ngIf="!authService.isLoggedIn()" class="flex gap-6">
+      <a
+        routerLink="/auth/login"
+        class="text-gray-800 hover:text-green-600 font-semibold"
+        >🔐 Login</a
+      >
+      <a routerLink="/" class="text-gray-800 hover:text-green-600 font-semibold"
+        >🏠 Home</a
+      >
+    </div>
+
+    <!-- Enlaces para usuarios autenticados -->
+    <div *ngIf="authService.isLoggedIn()" class="flex gap-6 items-center">
+      <a routerLink="/" class="text-gray-800 hover:text-green-600 font-semibold"
+        >🏠 Home</a
+      >
+      <a
+        routerLink="/monitoring"
+        class="text-gray-800 hover:text-green-600 font-semibold"
+        >📊 Monitoreo</a
+      >
+      <a
+        routerLink="/devices"
+        class="text-gray-800 hover:text-green-600 font-semibold"
+      >
+        🛰️ Vincular Dispositivo
+      </a>
+      <a
+        routerLink="/historial"
+        class="text-gray-800 hover:text-green-600 font-semibold"
+        >📈 Historial</a
+      >
+      <a
+        routerLink="/automation"
+        class="text-gray-800 hover:text-green-600 font-semibold"
+        >🤖 Automatización</a
+      >
+
+      <!-- Información del usuario y botón de logout -->
+      <div class="flex items-center gap-3 border-l border-gray-400 pl-4">
+        <span class="text-sm text-gray-600"
+          >👤 {{ currentUser?.username || currentUser?.email }}</span
+        >
+        <button
+          (click)="logout()"
+          class="text-red-600 hover:text-red-800 font-semibold text-sm"
+        >
+          🚪 Salir
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>

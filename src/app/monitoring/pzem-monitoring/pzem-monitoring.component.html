@@ -1,0 +1,345 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header del componente PZEM -->
+  <div class="bg-white shadow-sm border-b border-gray-200">
+    <div class="container mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="p-3 bg-blue-500 rounded-lg text-white text-2xl">⚡</div>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800">
+              Monitor Eléctrico PZEM-004T
+            </h1>
+            <p class="text-gray-600" *ngIf="selectedDevice">
+              {{ selectedDevice.name }} - {{ selectedDevice.mac_address }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Estado de conexión -->
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <div
+              class="w-3 h-3 rounded-full"
+              [class]="isConnected ? 'bg-green-500' : 'bg-red-500'"
+            ></div>
+            <span [class]="getDeviceStatusColor()" class="font-medium">
+              {{ getDeviceStatus() }}
+            </span>
+          </div>
+
+          <!-- Botón de reconexión -->
+          <button
+            *ngIf="!isConnected"
+            (click)="reconnectWebSocket()"
+            class="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Reconectar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tarjetas de valores en tiempo real -->
+  <div class="container mx-auto px-6 py-6">
+    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+      <!-- Voltaje -->
+      <div class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 font-medium">Voltaje</p>
+            <p
+              class="text-2xl font-bold"
+              [class]="getVoltageColor(lastSensorValues.voltage)"
+            >
+              {{ lastSensorValues.voltage | number : "1.2-2" }}
+            </p>
+            <p class="text-xs text-gray-500">Voltios (V)</p>
+          </div>
+          <div class="text-3xl text-blue-500">⚡</div>
+        </div>
+      </div>
+
+      <!-- Corriente -->
+      <div class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-red-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 font-medium">Corriente</p>
+            <p
+              class="text-2xl font-bold"
+              [class]="getCurrentColor(lastSensorValues.current)"
+            >
+              {{ lastSensorValues.current | number : "1.2-2" }}
+            </p>
+            <p class="text-xs text-gray-500">Amperios (A)</p>
+          </div>
+          <div class="text-3xl text-red-500">🔌</div>
+        </div>
+      </div>
+
+      <!-- Potencia -->
+      <div
+        class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-green-500"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 font-medium">Potencia</p>
+            <p
+              class="text-2xl font-bold"
+              [class]="getPowerColor(lastSensorValues.power)"
+            >
+              {{ lastSensorValues.power | number : "1.2-2" }}
+            </p>
+            <p class="text-xs text-gray-500">Watts (W)</p>
+          </div>
+          <div class="text-3xl text-green-500">💡</div>
+        </div>
+      </div>
+
+      <!-- Energía -->
+      <div
+        class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-purple-500"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 font-medium">Energía</p>
+            <p class="text-2xl font-bold text-purple-600">
+              {{ lastSensorValues.energy | number : "1.2-3" }}
+            </p>
+            <p class="text-xs text-gray-500">kWh</p>
+          </div>
+          <div class="text-3xl text-purple-500">🔋</div>
+        </div>
+      </div>
+
+      <!-- Frecuencia -->
+      <div
+        class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-yellow-500"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 font-medium">Frecuencia</p>
+            <p
+              class="text-2xl font-bold"
+              [class]="getFrequencyColor(lastSensorValues.frequency)"
+            >
+              {{ lastSensorValues.frequency | number : "1.2-2" }}
+            </p>
+            <p class="text-xs text-gray-500">Hertz (Hz)</p>
+          </div>
+          <div class="text-3xl text-yellow-500">📊</div>
+        </div>
+      </div>
+
+      <!-- Factor de Potencia -->
+      <div class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-cyan-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 font-medium">Factor P.</p>
+            <p
+              class="text-2xl font-bold"
+              [class]="getPowerFactorColor(lastSensorValues.powerFactor)"
+            >
+              {{ lastSensorValues.powerFactor | number : "1.2-3" }}
+            </p>
+            <p class="text-xs text-gray-500">Cos φ</p>
+          </div>
+          <div class="text-3xl text-cyan-500">📐</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selector de gráficas -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">
+        📈 Gráficas en Tiempo Real
+      </h3>
+
+      <!-- Botones de selección de gráfica -->
+      <div class="flex flex-wrap gap-3 mb-6">
+        <button
+          *ngFor="let chart of getAvailableCharts()"
+          (click)="setChartFromString(chart)"
+          [class]="
+            selectedChart === chart
+              ? 'bg-blue-500 text-white shadow-lg'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          "
+          class="px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
+        >
+          {{ getChartName(chart) }}
+        </button>
+      </div>
+
+      <!-- Contenedor de gráficas -->
+      <div class="bg-gray-50 rounded-lg p-4">
+        <!-- Gráfica de Voltaje y Corriente -->
+        <div *ngIf="selectedChart === 'voltage-current'" class="w-full h-96">
+          <div
+            echarts
+            [options]="voltageCurrentChartOption"
+            class="w-full h-full"
+          ></div>
+        </div>
+
+        <!-- Gráfica de Potencia -->
+        <div *ngIf="selectedChart === 'power'" class="w-full h-96">
+          <div echarts [options]="powerChartOption" class="w-full h-full"></div>
+        </div>
+
+        <!-- Gráfica de Energía -->
+        <div *ngIf="selectedChart === 'energy'" class="w-full h-96">
+          <div
+            echarts
+            [options]="energyChartOption"
+            class="w-full h-full"
+          ></div>
+        </div>
+
+        <!-- Gráfica de Frecuencia y Factor de Potencia -->
+        <div *ngIf="selectedChart === 'frequency-pf'" class="w-full h-96">
+          <div
+            echarts
+            [options]="frequencyPfChartOption"
+            class="w-full h-full"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Estadísticas -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+          📋 Estadísticas de la Sesión
+        </h3>
+
+        <div class="space-y-3">
+          <div
+            class="flex justify-between items-center py-2 border-b border-gray-100"
+          >
+            <span class="text-gray-600">Puntos de datos:</span>
+            <span class="font-semibold text-gray-800">{{
+              timeData.length
+            }}</span>
+          </div>
+
+          <div
+            class="flex justify-between items-center py-2 border-b border-gray-100"
+          >
+            <span class="text-gray-600">Última actualización:</span>
+            <span class="font-semibold text-gray-800">{{
+              getCurrentTime()
+            }}</span>
+          </div>
+
+          <div
+            class="flex justify-between items-center py-2 border-b border-gray-100"
+          >
+            <span class="text-gray-600">Voltaje promedio:</span>
+            <span class="font-semibold text-gray-800">
+              {{ getAverageVoltage() | number : "1.2-2" }} V
+            </span>
+          </div>
+
+          <div class="flex justify-between items-center py-2">
+            <span class="text-gray-600">Potencia promedio:</span>
+            <span class="font-semibold text-gray-800">
+              {{ getAveragePower() | number : "1.2-2" }} W
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado del dispositivo -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+          🔧 Estado del Dispositivo
+        </h3>
+
+        <div class="space-y-4">
+          <!-- Estado de conexión -->
+          <div
+            class="p-4 rounded-lg"
+            [class]="
+              isConnected
+                ? 'bg-green-50 border border-green-200'
+                : 'bg-red-50 border border-red-200'
+            "
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-4 h-4 rounded-full"
+                [class]="isConnected ? 'bg-green-500' : 'bg-red-500'"
+              ></div>
+              <div>
+                <p
+                  class="font-semibold"
+                  [class]="isConnected ? 'text-green-800' : 'text-red-800'"
+                >
+                  {{ isConnected ? "Conectado" : "Desconectado" }}
+                </p>
+                <p
+                  class="text-sm"
+                  [class]="isConnected ? 'text-green-600' : 'text-red-600'"
+                >
+                  {{
+                    isConnected
+                      ? "Recibiendo datos en tiempo real"
+                      : "Sin conexión al WebSocket"
+                  }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información del dispositivo -->
+          <div class="space-y-2" *ngIf="selectedDevice">
+            <div class="flex justify-between items-center py-1">
+              <span class="text-gray-600 text-sm">Nombre:</span>
+              <span class="font-medium text-gray-800 text-sm">{{
+                selectedDevice.name
+              }}</span>
+            </div>
+
+            <div class="flex justify-between items-center py-1">
+              <span class="text-gray-600 text-sm">MAC:</span>
+              <span class="font-mono text-gray-800 text-xs">{{
+                selectedDevice.mac_address
+              }}</span>
+            </div>
+
+            <div class="flex justify-between items-center py-1">
+              <span class="text-gray-600 text-sm">Tipo:</span>
+              <span class="font-medium text-gray-800 text-sm"
+                >NODO_CONTROL_PZEM</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado sin datos -->
+    <div
+      *ngIf="!isConnected && timeData.length === 0"
+      class="bg-white rounded-xl shadow-lg p-12 text-center mt-6"
+    >
+      <div class="text-6xl mb-4">📡</div>
+      <h3 class="text-xl font-semibold text-gray-800 mb-2">
+        Esperando conexión...
+      </h3>
+      <p class="text-gray-600 mb-4">
+        El dispositivo PZEM se está conectando para comenzar a recibir datos
+        eléctricos en tiempo real.
+      </p>
+      <button
+        (click)="reconnectWebSocket()"
+        class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+      >
+        Intentar Reconectar
+      </button>
+    </div>
+  </div>
+</div>

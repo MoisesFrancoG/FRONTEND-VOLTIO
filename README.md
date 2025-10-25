@@ -1,6 +1,44 @@
-# Voltioapp
+# Voltioapp - Sistema de Monitoreo Energético 🚀
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.2.
+**Estado del Despliegue:** ✅ DEPLOY TEST v2.0 ACTIVO  
+**Última actualización:** Julio 19, 2025  
+**URL de producción:** https://voltio.acstree.xyz
+
+Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-cli) versión 18.2.2.
+
+## 🧪 Verificación de Despliegue Automático
+
+**Cambios de prueba implementados para verificar CI/CD:**
+
+- 🏠 **Home:** Título actualizado con "DEPLOY TEST v2.0", botón verde, emojis
+- 🧭 **Navbar:** Fondo verde, indicador "DEPLOY v2.0", emojis en navegación
+- 📡 **Bluetooth:** Banner de test deploy, títulos actualizados
+- 🔐 **Login:** Indicador verde de deploy activo
+
+**Para verificar el despliegue:**
+
+```bash
+# Ejecutar script de verificación
+./deployment/verify-deployment.sh
+```
+
+## 🚀 Despliegue Automático
+
+El proyecto incluye CI/CD completo con GitHub Actions:
+
+- ✅ Build automático en push a `main`/`develop`
+- ✅ Tests automatizados
+- ✅ Despliegue a EC2 Ubuntu con Nginx
+- ✅ SSL automático con Let's Encrypt
+- ✅ Corrección automática de directorio browser (Angular 17+)
+
+### Scripts de mantenimiento disponibles:
+
+```bash
+./deployment/server-utils.sh status     # Estado del servidor
+./deployment/quick-fix-browser.sh       # Corrección directorio browser
+./deployment/deploy-diagnosis.sh        # Diagnóstico completo
+```
 
 ## Development server
 
